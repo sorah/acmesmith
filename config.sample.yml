@@ -1,0 +1,18 @@
+endpoint: https://acme-staging.api.letsencrypt.org/
+# endpoint: https://acme-v01.api.letsencrypt.org/
+storage:
+  type: s3
+  region: 'ap-northeast-1'
+  bucket: '...'
+  # prefix: '...'
+  # kms_key_id: 'arn:aws:kms:...'
+
+# storage:
+#   type: filesystem
+#   path: ./storage
+
+challenge_responders:
+  - route53: {}
+
+account_key_passphrase: password
+certificate_key_passphrase: secret
