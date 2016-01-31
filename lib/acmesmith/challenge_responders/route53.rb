@@ -118,7 +118,7 @@ module Acmesmith
 
       def hosted_zone_map
         @hosted_zone_map.map { |domain, zone_id|
-          [canonical_fqdn(domain), [zone_id]]
+          ["#{canonical_fqdn(domain)}.", [zone_id]] # XXX:
         }.to_h
       end
 
