@@ -4,6 +4,22 @@ Acmesmith is an [ACME (Automatic Certificate Management Environment)](https://gi
 
 This tool is written in Ruby, but this saves certificates in simple scheme, so you can fetch certificate by your own simple scripts.
 
+## Features
+
+- ACME client designed to work on multiple servers
+- ACME registration, domain authorization, certificate requests 
+  - Tested against [Let's encrypt](https://letsencrypt.org)
+- Storing keys in several ways
+  - Currently AWS S3 is supported
+- Challenge response
+  - Currently `dns-01` with AWS Route 53 is supported
+
+### Planned
+
+- Automated renewal of certificates that expiring soon
+- Automated deployments support (post issurance hook)
+- Example shellscripts to fetch certificates
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -38,9 +54,11 @@ $ acmesmith show-certificate COMMON_NAME  # show certificate
 $ acmesmith show-private-key COMMON_NAME  # show private key
 ```
 
+See `acmesmith help [subcommand]` for more help.
+
 ## Configuration
 
-See [config.sample.yml](./config.sample.yml) to start.
+See [config.sample.yml](./config.sample.yml) to start. Default configuration file is `./acmesmith.yml`.
 
 ``` yaml
 endpoint: https://acme-staging.api.letsencrypt.org/
