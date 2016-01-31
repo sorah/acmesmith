@@ -113,7 +113,7 @@ module Acmesmith
           prefix: certs_prefix,
         ).each.flat_map do |page|
           regexp = /\A#{Regexp.escape(certs_prefix)}/
-          page.common_prefixes.map { |_| _.sub(regexp, '').sub(/\/.+\z/, '') }.uniq
+          page.common_prefixes.map { |_| _.prefix.sub(regexp, '').sub(/\/.+\z/, '').sub(/\/\z/, '') }.uniq
         end
       end
 
@@ -125,7 +125,7 @@ module Acmesmith
           prefix: cert_ver_prefix,
         ).each.flat_map do |page|
           regexp = /\A#{Regexp.escape(cert_ver_prefix)}/
-          page.common_prefixes.map { |_| _.sub(regexp, '').sub(/\/.+\z/, '') }.uniq
+          page.common_prefixes.map { |_| _.prefix.sub(regexp, '').sub(/\/.+\z/, '').sub(/\/\z/, '') }.uniq
         end.reject { |_| _ == 'current' }
       end
 
