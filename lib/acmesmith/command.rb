@@ -8,6 +8,7 @@ require 'acme/client'
 module Acmesmith
   class Command < Thor
     class_option :config, default: './acmesmith.yml'
+    class_option :passphrase_from_env,  type: :boolean, aliases: %w(-E), default: false, desc: 'Read $ACMESMITH_ACCOUNT_KEY_PASSPHRASE and $ACMESMITH_CERT_KEY_PASSPHRASE for passphrases'
 
     desc "register CONTACT", "Create account key (contact e.g. mailto:xxx@example.org)"
     def register(contact)
@@ -16,7 +17,7 @@ module Acmesmith
       registration = acme.register(contact: contact)
       registration.agree_terms
 
-      storage.put_account_key(key, config['account_key_passphrase'])
+      storage.put_account_key(key, account_key_passphrase)
       puts "Generated:\n#{key.private_key.public_key.to_pem}"
     end
 
@@ -52,7 +53,7 @@ module Acmesmith
       acme_cert = acme.new_certificate(csr)
 
       cert = Certificate.from_acme_client_certificate(acme_cert)
-      storage.put_certificate(cert, config['certificate_key_passphrase'])
+      storage.put_certificate(cert, certificate_key_passphrase)
 
       puts cert.certificate.to_text
       puts cert.certificate.to_pem
@@ -96,7 +97,7 @@ module Acmesmith
     method_option :version, type: :string, default: 'current'
     def show_private_key(common_name)
       cert = storage.get_certificate(common_name, version: options[:version])
-      cert.key_passphrase = config['certificate_key_passphrase'] if config['certificate_key_passphrase']
+      cert.key_passphrase = certificate_key_passphrase if certificate_key_passphrase
 
       puts cert.private_key.to_pem
     end
@@ -119,12 +120,28 @@ module Acmesmith
 
     def account_key
       @account_key ||= storage.get_account_key.tap do |x|
-        x.key_passphrase = config['account_key_passphrase'] if config['account_key_passphrase']
+        x.key_passphrase = account_key_passphrase if account_key_passphrase
       end
     end
 
     def acme
       @acme ||= Acme::Client.new(private_key: account_key.private_key, endpoint: config['endpoint'])
+    end
+
+    def certificate_key_passphrase
+      if options[:passphrase_from_env]
+        ENV['ACMESMITH_CERTIFICATE_KEY_PASSPHRASE'] || config['certificate_key_passphrase']
+      else
+        config['certificate_key_passphrase']
+      end
+    end
+
+    def account_key_passphrase
+      if options[:passphrase_from_env]
+        ENV['ACMESMITH_ACCOUNT_KEY_PASSPHRASE'] || config['account_key_passphrase']
+      else
+        config['account_key_passphrase']
+      end
     end
   end
 end
