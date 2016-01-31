@@ -9,7 +9,10 @@ Gem::Specification.new do |spec|
   spec.authors       = ["sorah (Shota Fukumori)"]
   spec.email         = ["her@sorah.jp"]
 
-  spec.summary       = %q{ACME client to manage certificate in multi server environment with cloud services (e.g. AWS)}
+  spec.summary       = %q{ACME client (Let's encrypt client) to manage certificate in multi server environment with cloud services (e.g. AWS)}
+  spec.description   = <<-EOF
+Acmesmith is an [ACME (Automatic Certificate Management Environment)](https://github.com/ietf-wg-acme/acme) client that works perfect on environment with multiple servers. This client saves certificate and keys on cloud services (e.g. AWS S3) securely, then allow to deploy issued certificates onto your servers smoothly. This works well on [Let's encrypt](https://letsencrypt.org).
+  EOF
   spec.homepage      = "https://github.com/sorah/acmesmith"
   spec.license       = "MIT"
 
@@ -19,10 +22,10 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "acme-client"
-  spec.add_dependency "aws-sdk"
+  spec.add_dependency "aws-sdk", "> 2"
   spec.add_dependency "thor"
 
-  spec.add_development_dependency "bundler", "~> 1.10"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "bundler"
+  spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec"
 end
