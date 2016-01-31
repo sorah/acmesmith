@@ -8,7 +8,7 @@ require 'acme/client'
 module Acmesmith
   class Command < Thor
     class_option :config, default: './acmesmith.yml', aliases: %w(-c)
-    class_option :passphrase_from_env,  type: :boolean, aliases: %w(-E), default: false, desc: 'Read $ACMESMITH_ACCOUNT_KEY_PASSPHRASE and $ACMESMITH_CERT_KEY_PASSPHRASE for passphrases'
+    class_option :passphrase_from_env,  type: :boolean, aliases: %w(-E), default: false, desc: 'Read $ACMESMITH_ACCOUNT_KEY_PASSPHRASE and $ACMESMITH_CERTIFICATE_KEY_PASSPHRASE for passphrases'
 
     desc "register CONTACT", "Create account key (contact e.g. mailto:xxx@example.org)"
     def register(contact)
