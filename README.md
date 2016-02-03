@@ -152,12 +152,12 @@ challenge_responders:
       "Effect": "Allow",
       "Action": "route53:ListHostedZones",
       "Resource": "*"
-    }
+    },
     {
       "Effect": "Allow",
       "Action": "route53:ChangeResourceRecordSets",
       "Resource": ["arn:aws:route53:::hostedzone/*"]
-    }
+    },
     {
       "Effect": "Allow",
       "Action": "route53:GetChange",
