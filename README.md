@@ -48,10 +48,12 @@ $ acmesmith request COMMON_NAME [SAN]     # request certificate for CN +COMMON_N
 ```
 
 ```
-$ acmesmith list [COMMON_NAME]            # list certificates or its versions
-$ acmesmith current COMMON_NAME           # show current version for certificate
-$ acmesmith show-certificate COMMON_NAME  # show certificate
-$ acmesmith show-private-key COMMON_NAME  # show private key
+$ acmesmith list [COMMON_NAME]                          # list certificates or its versions
+$ acmesmith current COMMON_NAME                         # show current version for certificate
+$ acmesmith show-certificate COMMON_NAME                # show certificate
+$ acmesmith show-private-key COMMON_NAME                # show private key
+$ acmesmith save-certificate COMMON_NAME --output=PATH  # Save certificate to a file
+$ acmesmith save-private-key COMMON_NAME --output=PATH  # Save private key to a file
 ```
 
 See `acmesmith help [subcommand]` for more help.
