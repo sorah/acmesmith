@@ -14,7 +14,7 @@ module Acmesmith
       attr_reader :path
 
       def get_account_key
-        raise NotExist unless account_key_path.exist?
+        raise NotExist.new("Account key doesn't exist") unless account_key_path.exist?
         AccountKey.new account_key_path.read
       end
 
@@ -37,7 +37,7 @@ module Acmesmith
       end
 
       def get_certificate(common_name, version: 'current')
-        raise NotExist unless certificate_base_path(common_name, version).exist?
+        raise NotExist.new("Certificate for #{common_name.inspect} of #{version} version doesn't exist") unless certificate_base_path(common_name, version).exist?
         certificate = certificate_path(common_name, version).read
         chain = chain_path(common_name, version).read
         private_key = private_key_path(common_name, version).read
