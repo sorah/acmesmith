@@ -31,7 +31,7 @@ module Acmesmith
         obj = @s3.get_object(bucket: bucket, key: account_key_key)
         AccountKey.new obj.body.read
       rescue Aws::S3::Errors::NoSuchKey
-        raise NotExist
+        raise NotExist.new("Account key doesn't exist")
       end
 
       def account_key_exist?
@@ -102,7 +102,7 @@ module Acmesmith
         private_key = @s3.get_object(bucket: bucket, key: private_key_key(common_name, version)).body.read
         Certificate.new(certificate, chain, private_key)
       rescue Aws::S3::Errors::NoSuchKey
-        raise NotExist
+        raise NotExist.new("Certificate for #{common_name.inspect} of #{version} version doesn't exist")
       end
 
       def list_certificates
@@ -153,7 +153,7 @@ module Acmesmith
           key: certificate_current_key(cn),
         ).body.read.chomp
       rescue Aws::S3::Errors::NoSuchKey
-        raise NotExist
+        raise NotExist.new("Certificate for #{cn.inspect} of current version doesn't exist")
       end
 
       def certificate_key(cn, ver)
