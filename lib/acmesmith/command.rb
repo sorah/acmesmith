@@ -93,6 +93,17 @@ module Acmesmith
     end
     map 'show-certiticate' => :show_certificate
 
+    desc 'save-certificate COMMON_NAME', 'Save certificate to a file'
+    method_option :version, type: :string, default: 'current'
+    method_option :output, type: :string, required: true, banner: 'PATH', desc: 'Path to output file'
+    method_option :mode, type: :string, default: '0600', desc: 'Mode (permission) of the output file on create'
+    def save_certificate(common_name)
+      cert = storage.get_certificate(common_name, version: options[:version])
+      File.open(options[:output], 'w', options[:mode].to_i(8)) do |f|
+        f.puts(cert.fullchain)
+      end
+    end
+
     desc "show-private-key COMMON_NAME", "show private key"
     method_option :version, type: :string, default: 'current'
     def show_private_key(common_name)
@@ -102,6 +113,18 @@ module Acmesmith
       puts cert.private_key.to_pem
     end
     map 'show-private-key' => :show_private_key
+
+    desc 'save-private-key COMMON_NAME', 'Save private key to a file'
+    method_option :version, type: :string, default: 'current'
+    method_option :output, type: :string, required: true, banner: 'PATH', desc: 'Path to output file'
+    method_option :mode, type: :string, default: '0600', desc: 'Mode (permission) of the output file on create'
+    def save_private_key(common_name)
+      cert = storage.get_certificate(common_name, version: options[:version])
+      cert.key_passphrase = certificate_key_passphrase if certificate_key_passphrase
+      File.open(options[:output], 'w', options[:mode].to_i(8)) do |f|
+        f.puts(cert.private_key)
+      end
+    end
 
     # desc "autorenew", "request renewal of certificates which expires soon"
     # method_option :days, alias: %w(-d), type: :integer, default: 7, desc: 'specify threshold in days to select certificates to renew'
