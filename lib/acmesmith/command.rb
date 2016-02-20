@@ -126,10 +126,20 @@ module Acmesmith
       end
     end
 
-    # desc "autorenew", "request renewal of certificates which expires soon"
-    # method_option :days, alias: %w(-d), type: :integer, default: 7, desc: 'specify threshold in days to select certificates to renew'
-    # def autorenew
-    # end
+    desc "autorenew", "request renewal of certificates which expires soon"
+    method_option :days, aliases: %w(-d), default: 7, desc: 'specify threshold in days to select certificates to renew'
+    def autorenew
+      storage.list_certificates.each do |cn|
+        puts "=> #{cn}"
+        cert = storage.get_certificate(cn)
+        not_after = cert.certificate.not_after.utc
+
+        puts "   Not valid after: #{not_after}"
+        next unless (cert.certificate.not_after.utc - Time.now.utc) < (options[:days].to_i * 86400)
+        puts " * Renewing: CN=#{cert.common_name}, SANs=#{cert.sans.join(',')}"
+        request(cert.common_name, *cert.sans)
+      end
+    end
 
     private
 
