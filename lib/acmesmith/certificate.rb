@@ -78,6 +78,12 @@ module Acmesmith
       certificate.subject.to_a.assoc('CN')[1]
     end
 
+    def sans
+      certificate.extensions.select { |_| _.oid == 'subjectAltName' }.flat_map do |ext|
+        ext.value.split(/,\s*/).select { |_| _.start_with?('DNS:') }.map { |_| _[4..-1] }
+      end
+    end
+
     def version
       "#{certificate.not_before.utc.strftime('%Y%m%d-%H%M%S')}_#{certificate.serial.to_i.to_s(16)}"
     end
