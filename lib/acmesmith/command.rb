@@ -141,6 +141,15 @@ module Acmesmith
       end
     end
 
+    desc "add-san COMMON_NAME [ADDITIONAL_SANS]", "request renewal of existing certificate with additional SANs"
+    def add_san(common_name, *add_sans)
+      puts "=> reissuing CN=#{common_name} with new SANs #{add_sans.join(?,)}"
+      cert = storage.get_certificate(common_name)
+      sans = cert.sans + add_sans
+      puts " * SANs will be: #{sans.join(?,)}"
+      request(cert.common_name, *sans)
+    end
+
     private
 
     def config
