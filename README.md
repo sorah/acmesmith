@@ -16,7 +16,6 @@ This tool is written in Ruby, but this saves certificates in simple scheme, so y
 
 ### Planned
 
-- Automated renewal of certificates that expiring soon
 - Automated deployments support (post issurance hook)
 - Example shellscripts to fetch certificates
 
@@ -252,7 +251,6 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 - Tests
 - Support post actions (notifying servers, deploying to somewhere, etc...)
-- Automated renewal command (request new certificates for existing certificates that expires soon)
 
 ## Contributing
 
