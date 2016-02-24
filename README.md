@@ -44,6 +44,7 @@ $ acmesmith register CONTACT              # Create account key (contact e.g. mai
 ```
 $ acmesmith authorize DOMAIN              # Get authz for DOMAIN.
 $ acmesmith request COMMON_NAME [SAN]     # request certificate for CN +COMMON_NAME+ with SANs +SAN+
+$ acmesmith add-san COMMON_NAME [SAN]     # re-request existing certificate of CN with additional SAN(s)
 ```
 
 ```
@@ -53,6 +54,10 @@ $ acmesmith show-certificate COMMON_NAME                # show certificate
 $ acmesmith show-private-key COMMON_NAME                # show private key
 $ acmesmith save-certificate COMMON_NAME --output=PATH  # Save certificate to a file
 $ acmesmith save-private-key COMMON_NAME --output=PATH  # Save private key to a file
+```
+
+```
+$ acmesmith autorenew [-d DAYS] # Renew certificates which being expired soon
 ```
 
 See `acmesmith help [subcommand]` for more help.
