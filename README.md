@@ -137,6 +137,12 @@ challenge_responders:
       #   "example.org.": "/hostedzone/DEADBEEF"
 ```
 
+## 3rd party Plugins
+
+### Challenge responders
+
+- [hanazuki/acmesmith-designate](https://github.com/hanazuki/acmesmith-designate) `dns-01` challenge responder with OpenStack-based DNSaaS (Designate v1 API), e.g. for ConoHa.
+
 ## Vendor dependent notes
 
 ### AWS
