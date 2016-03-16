@@ -34,17 +34,23 @@ module Acmesmith
 
       responder.respond(domain, challenge)
 
-      puts "=> Requesting verification..."
-      challenge.request_verification
-      loop do
-        status = challenge.verify_status
-        puts " * verify_status: #{status}"
-        break if status == 'valid'
-        sleep 3
+      begin
+        puts "=> Requesting verification..."
+        challenge.request_verification
+        loop do
+          status = challenge.verify_status
+          puts " * verify_status: #{status}"
+          break if status == 'valid'
+          if status == "invalid"
+            err = challenge.error
+            puts "#{err["type"]}: #{err["detail"]}"
+          end
+          sleep 3
+        end
+        puts "=> Done"
+      ensure
+        responder.cleanup(domain, challenge)
       end
-
-      responder.cleanup(domain, challenge)
-      puts "=> Done"
     end
 
     desc "request COMMON_NAME [SAN]", "request certificate for CN +COMMON_NAME+ with SANs +SAN+"
