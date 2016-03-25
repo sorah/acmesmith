@@ -17,7 +17,6 @@ This tool is written in Ruby, but this saves certificates in simple scheme, so y
 ### Planned
 
 - Automated deployments support (post issurance hook)
-- Example shellscripts to fetch certificates
 
 ## Installation
 
@@ -107,6 +106,21 @@ This saves certificates and keys in the following S3 keys:
 - `{prefix}/certs/{common_name}/{version}/key.pem`: private key in pem
 - `{prefix}/certs/{common_name}/{version}/chain.pem`: CA chain in pem
 - `{prefix}/certs/{common_name}/{version}/fullchain.pem`: certificate + CA chain in pem. This is suitable for some server softwares like nginx.
+
+##### Example shell script commands to fetch certificates
+
+Note that if KMS is used you need to [specify Signature Version 4](http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingAWSSDK.html#specify-signature-version) in the command-line tools before interacting with S3.
+
+```sh
+aws configure set s3.signature_version s3v4
+
+S3_PATH=s3://${BUCKET}/${PREFIX}/certs/${COMMON_NAME}
+CURRENT=${S3_PATH}/$(aws s3 cp ${S3_PATH}/current -)
+CERT=$(aws s3 cp ${CURRENT}/cert.pem -)
+KEY=$(aws s3 cp ${CURRENT}/key.pem -)
+CHAIN=$(aws s3 cp ${CURRENT}/chain.pem -)
+FULLCHAIN=$(aws s3 cp ${CURRENT}/fullchain.pem -)
+```
 
 #### Filesystem
 
