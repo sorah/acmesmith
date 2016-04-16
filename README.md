@@ -54,6 +54,7 @@ $ acmesmith show-certificate COMMON_NAME                # show certificate
 $ acmesmith show-private-key COMMON_NAME                # show private key
 $ acmesmith save-certificate COMMON_NAME --output=PATH  # Save certificate to a file
 $ acmesmith save-private-key COMMON_NAME --output=PATH  # Save private key to a file
+$ acmesmith save-pkcs12      COMMON_NAME --output=PATH  # Save certificate and private key to a PKCS12 file
 ```
 
 ```

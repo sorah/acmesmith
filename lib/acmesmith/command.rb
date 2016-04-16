@@ -132,6 +132,28 @@ module Acmesmith
       end
     end
 
+    desc 'save-pkcs12 COMMON_NAME', 'Save ceriticate and private key to .p12 file'
+    method_option :version, type: :string, default: 'current'
+    method_option :output, type: :string, required: true, banner: 'PATH', desc: 'Path to output file'
+    method_option :mode, type: :string, default: '0600', desc: 'Mode (permission) of the output file on create'
+    def save_pkcs12(common_name)
+      cert = storage.get_certificate(common_name, version: options[:version])
+      cert.key_passphrase = certificate_key_passphrase if certificate_key_passphrase
+
+      print 'Passphrase: '
+      passphrase = $stdin.noecho { $stdin.gets }.chomp
+      print "\nPassphrase (confirm): "
+      passphrase2 = $stdin.noecho { $stdin.gets }.chomp
+      puts
+
+      raise ArgumentError, "Passphrase doesn't match" if passphrase != passphrase2
+
+      p12 = OpenSSL::PKCS12.create(passphrase, cert.common_name, cert.private_key, cert.certificate)
+      File.open(options[:output], 'w', options[:mode].to_i(8)) do |f|
+        f.puts p12.to_der
+      end
+    end
+
     desc "autorenew", "request renewal of certificates which expires soon"
     method_option :days, aliases: %w(-d), default: 7, desc: 'specify threshold in days to select certificates to renew'
     def autorenew
