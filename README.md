@@ -146,6 +146,11 @@ challenge_responders:
 ### Challenge responders
 
 - [hanazuki/acmesmith-designate](https://github.com/hanazuki/acmesmith-designate) `dns-01` challenge responder with OpenStack-based DNSaaS (Designate v1 API), e.g. for ConoHa.
+- [nagachika/acmesmith-google-cloud-dns](https://github.com/nagachika/acmesmith-google-cloud-dns) `dns-01` challenge responder with [Google Cloud DNS](https://cloud.google.com/dns/).
+
+### Storage
+
+- [minimum2scp/acmesmith-google-cloud-storage](https://github.com/minimum2scp/acmesmith-google-cloud-storage) storage using [Google Cloud Storage](https://cloud.google.com/storage/)
 
 ## Vendor dependent notes
 
