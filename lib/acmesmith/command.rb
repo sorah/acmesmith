@@ -3,7 +3,8 @@ require 'thor'
 require 'acmesmith/config'
 require 'acmesmith/account_key'
 require 'acmesmith/certificate'
-require 'acme/client'
+
+require 'acme-client'
 
 module Acmesmith
   class Command < Thor
