@@ -199,7 +199,7 @@ module Acmesmith
     end
 
     def certificate_key_passphrase
-      if options[:passphrase_from_env]
+      if options[:passphrase_from_env] || config['passphrase_from_env']
         ENV['ACMESMITH_CERTIFICATE_KEY_PASSPHRASE'] || config['certificate_key_passphrase']
       else
         config['certificate_key_passphrase']
@@ -207,7 +207,7 @@ module Acmesmith
     end
 
     def account_key_passphrase
-      if options[:passphrase_from_env]
+      if options[:passphrase_from_env] || config['passphrase_from_env']
         ENV['ACMESMITH_ACCOUNT_KEY_PASSPHRASE'] || config['account_key_passphrase']
       else
         config['account_key_passphrase']
