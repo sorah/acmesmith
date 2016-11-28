@@ -6,24 +6,19 @@ describe Acmesmith do
     expect(Acmesmith::VERSION).not_to be nil
   end
 
-  it 'display help' do
+  it 'should display help' do
     args = ["help"]
-    opts = {:config => 'spec/config.mock.yml'}
-
-    expect { Acmesmith::Command.start(args,opts)}.to output(/Commands:/).to_stdout
-    expect { Acmesmith::Command.start(args,opts)}.to output(/authz/).to_stdout
+    expect { Acmesmith::Command.start(args)}.to output(/Commands:/).to_stdout
+    expect { Acmesmith::Command.start(args)}.to output(/authz/).to_stdout
   end
 
-  it 'execute list' do
+  it 'should merge and execute post issueing hooks' do
 
-    args = ["list"]
-    opts = {:config => 'spec/config.mock.yml'}
+    args = ["post_issue_hooks", "test.example.com", '-c', 'spec/config.mock.yml']
+    expect { Acmesmith::Command.start(args)}.to output(/Key for test\.example\.com is issued/).to_stdout
 
-    cmd =Acmesmith::Command.new
-    cmd.execute_post_issue_hooks('test.example.com')
+    args = ["post_issue_hooks", "admin.example.com", '-c', 'spec/config.mock.yml']
+    expect { Acmesmith::Command.start(args)}.to output(/Running touch \/tmp\/step002-admin\.example\.com/).to_stdout
 
-
-    expect { Acmesmith::Command.start(args,opts)}.to output(/Commands:/).to_stdout
-    expect { Acmesmith::Command.start(args,opts)}.to output(/authz/).to_stdout
   end
 end

@@ -13,16 +13,12 @@ certificate_key_passphrase: secret
 post_issueing_hooks:
   "test.example.com":
     - shell:
-        command: touch /tmp/step001
+        command: touch /tmp/step001-<%= @common_name %>
     - shell:
-        command: touch /tmp/step002
+        command: touch /tmp/step002-<%= @common_name %>
     - sendmail:
         recipient: sysadmin@example.com
         subject: Key for <%= @common_name %> is issued
   "admin.example.com":
     - shell:
-        command: echo "upload to aws with timestamp in name"
-    - shell:
-        command: echo "update elb cert with new"
-    - shell:
-        command: echo "remove old cert"
+        command:  touch /tmp/step002-<%= @common_name %>

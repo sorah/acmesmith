@@ -13,11 +13,10 @@ module Acmesmith
       end
 
       def execute()
+        parsed_subject = ERB.new(@subject).result(binding)
         puts "=> Executing Post Issueing Hook for #{@common_name} in #{self.class.name}"
-        puts "=> Sending mail to #{@recipient} with subject #{@subject}"
+        puts "=> Sending mail to #{@recipient} with subject '#{parsed_subject}'"
       end
-
-      private
 
     end
   end

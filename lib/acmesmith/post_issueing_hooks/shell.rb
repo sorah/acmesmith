@@ -1,3 +1,4 @@
+require 'erb'
 require 'acmesmith/post_issueing_hooks/base'
 
 module Acmesmith
@@ -12,10 +13,11 @@ module Acmesmith
       end
 
       def execute()
+        parsed_command = ERB.new(@command).result(binding)
         puts "=> Executing Post Issueing Hook for #{@common_name} in #{self.class.name}"
-        puts "=> Running #{@command}"
+        puts "=> Running #{parsed_command}"
+        system(parsed_command)
       end
-
     end
   end
 end
