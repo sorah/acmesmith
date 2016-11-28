@@ -1,6 +1,7 @@
 require 'yaml'
 require 'acmesmith/storages'
 require 'acmesmith/challenge_responders'
+require 'acmesmith/post_issueing_hooks'
 
 module Acmesmith
   class Config
@@ -39,6 +40,18 @@ module Acmesmith
       @storage ||= begin
         c = @config['storage'].dup
         Storages.find(c.delete('type')).new(**c.map{ |k,v| [k.to_sym, v]}.to_h)
+      end
+    end
+
+    def post_issueing_hooks(common_name)
+      @post_issueing_hooks ||= begin
+        specs = @config['post_issueing_hooks'][common_name]
+        specs.flat_map do |specs_sub|
+          specs_sub[specs_sub.flatten[0]]['common_name'] = common_name
+          specs_sub.map do |k, v|
+            PostIssueingHooks.find(k).new(**v.map{ |k_,v_| [k_.to_sym, v_]}.to_h)
+          end
+        end
       end
     end
 
