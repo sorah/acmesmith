@@ -156,7 +156,7 @@ module Acmesmith
     end
 
     desc "autorenew", "request renewal of certificates which expires soon"
-    method_option :days, aliases: %w(-d), default: 7, desc: 'specify threshold in days to select certificates to renew'
+    method_option :days, type: :numeric, aliases: %w(-d), default: 7, desc: 'specify threshold in days to select certificates to renew'
     def autorenew
       storage.list_certificates.each do |cn|
         puts "=> #{cn}"
