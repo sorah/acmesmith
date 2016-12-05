@@ -28,4 +28,4 @@ post_issueing_hooks:
   "allow.failing.example.com":
     - shell:
         command:  /bin/iwillfail
-        ignore_failure: hallo
+        ignore_failure: true
