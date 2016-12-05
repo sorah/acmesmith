@@ -16,9 +16,6 @@ post_issueing_hooks:
         command: touch /tmp/step001-<%= @common_name %>
     - shell:
         command: touch /tmp/step002-<%= @common_name %>
-    - sendmail:
-        recipient: sysadmin@example.com
-        subject: Key for <%= @common_name %> is issued
   "admin.example.com":
     - shell:
         command:  touch /tmp/step002-<%= @common_name %>
