@@ -1,3 +1,4 @@
+require 'open3'
 require 'erb'
 require 'acmesmith/post_issueing_hooks/base'
 
@@ -16,14 +17,19 @@ module Acmesmith
       def execute
         parsed_command = ERB.new(@command).result(binding)
         puts "=> Executing Post Issueing Hook for #{@common_name} in #{self.class.name}"
-        puts "=> Running #{parsed_command}"
+        puts "=> Running: #{parsed_command}"
 
-        unless system(parsed_command)
+        stdout, stderr, status = Open3.capture3(parsed_command + ";")
+
+        if status != 0
           if @ignore_failure
-            puts "WARNING: Command #{parsed_command} stopped with exit code #{$?.exitstatus}"
+            puts "WARNING"
+            puts stderr
           else
-            raise "FATAL: Command #{parsed_command} stopped with exit code #{$?.exitstatus}"
+            raise "FATAL\n#{stderr}"
           end
+        else
+          puts stdout
         end
       end
     end
