@@ -1,9 +1,4 @@
 #!/usr/bin/env ruby
-
-unless defined?(Acmesmith)
-  require 'bundler/setup'
-end
-
 require 'acmesmith/command'
 
 Acmesmith::Command.start
