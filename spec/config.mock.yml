@@ -13,12 +13,12 @@ certificate_key_passphrase: secret
 post_issueing_hooks:
   "test.example.com":
     - shell:
-        command: touch /tmp/step001-<%= @common_name %>
+        command: touch /tmp/step001-${COMMON_NAME}
     - shell:
-        command: touch /tmp/step002-<%= @common_name %>
+        command: touch /tmp/step002-${COMMON_NAME}
   "admin.example.com":
     - shell:
-        command:  touch /tmp/step002-<%= @common_name %>
+        command:  echo $COMMON_NAME > /tmp/step003-${COMMON_NAME}
   "allow.no.failing.example.com":
     - shell:
         command:  /bin/iwillfail

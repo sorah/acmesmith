@@ -1,5 +1,4 @@
 require 'open3'
-require 'erb'
 require 'acmesmith/post_issueing_hooks/base'
 
 module Acmesmith
@@ -15,11 +14,11 @@ module Acmesmith
       end
 
       def execute
-        parsed_command = ERB.new(@command).result(binding)
         puts "=> Executing Post Issueing Hook for #{@common_name} in #{self.class.name}"
-        puts "=> Running: #{parsed_command}"
+        puts "=> ENV: COMMON_NAME=#{@common_name}"
+        puts "=> Running: #{@command}"
 
-        stdout, stderr, status = Open3.capture3(parsed_command + ";")
+        stdout, stderr, status = Open3.capture3({"COMMON_NAME" => @common_name}, "#{@command};")
 
         if status != 0
           if @ignore_failure

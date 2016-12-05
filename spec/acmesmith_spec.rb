@@ -13,8 +13,12 @@ describe Acmesmith do
   end
 
   it 'should merge and execute post issueing hooks' do
+
     args = ["post_issue_hooks", "admin.example.com", '-c', 'spec/config.mock.yml']
-    expect { Acmesmith::Command.start(args) }.to output(/Running: touch \/tmp\/step002-admin\.example\.com/).to_stdout
+    expect { Acmesmith::Command.start(args) }.to output(/Running: echo \$COMMON_NAME > \/tmp\/step003-/).to_stdout
+    content = File.read("/tmp/step003-admin.example.com")
+
+    expect(content).to eq("admin.example.com\n")
   end
 
   it 'should fail and raise for allow.no.failing.example.com' do
@@ -24,7 +28,6 @@ describe Acmesmith do
 
   it 'should fail and continue for allow.failing.example.com' do
     args = ["post_issue_hooks", "allow.failing.example.com", '-c', 'spec/config.mock.yml']
-    #expect { Acmesmith::Command.start(args) }.to raise_error(/Na such file or directory/)
     expect { Acmesmith::Command.start(args) }.to output(/WARNING/).to_stdout
   end
 
