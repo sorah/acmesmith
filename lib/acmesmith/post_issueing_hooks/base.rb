@@ -1,7 +1,7 @@
 module Acmesmith
   module PostIssueingHooks
     class Base
-      def initialize()
+      def initialize
       end
 
       def execute(domain)
