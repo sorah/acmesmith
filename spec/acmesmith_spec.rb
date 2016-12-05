@@ -19,6 +19,16 @@ describe Acmesmith do
 
     args = ["post_issue_hooks", "admin.example.com", '-c', 'spec/config.mock.yml']
     expect { Acmesmith::Command.start(args) }.to output(/Running touch \/tmp\/step002-admin\.example\.com/).to_stdout
-
   end
+
+  it 'should fail and raise for allow.no.failing.example.com' do
+    args = ["post_issue_hooks", "allow.no.failing.example.com", '-c', 'spec/config.mock.yml']
+    expect { Acmesmith::Command.start(args) }.to raise_error(/FATAL: Command \/bin\/iwillfail stopped with exit code 127/)
+  end
+
+  it 'should fail and continue for allow.failing.example.com' do
+    args = ["post_issue_hooks", "allow.failing.example.com", '-c', 'spec/config.mock.yml']
+    expect { Acmesmith::Command.start(args) }.to output(/WARNING: Command \/bin\/iwillfail stopped with exit code 127/).to_stdout
+  end
+
 end

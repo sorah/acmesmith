@@ -22,3 +22,10 @@ post_issueing_hooks:
   "admin.example.com":
     - shell:
         command:  touch /tmp/step002-<%= @common_name %>
+  "allow.no.failing.example.com":
+    - shell:
+        command:  /bin/iwillfail
+  "allow.failing.example.com":
+    - shell:
+        command:  /bin/iwillfail
+        ignore_failure: hallo
