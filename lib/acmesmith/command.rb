@@ -64,7 +64,15 @@ module Acmesmith
 
       puts cert.certificate.to_text
       puts cert.certificate.to_pem
+
+      execute_post_issue_hooks(common_name)
     end
+
+    desc "post-issue-hooks COMMON_NAME", "Run all post-issueing hooks for common name. (for testing purpose)"
+    def post_issue_hooks(common_name)
+      execute_post_issue_hooks(common_name)
+    end
+    map 'post-issue-hooks' => :post_issue_hooks
 
     desc "list [COMMON_NAME]", "list certificates or its versions"
     def list(common_name = nil)
@@ -214,5 +222,13 @@ module Acmesmith
         config['account_key_passphrase']
       end
     end
+
+    def execute_post_issue_hooks(common_name)
+      post_issues_hooks_for_common_name = config.post_issueing_hooks(common_name)
+      post_issues_hooks_for_common_name.each do |hook|
+        hook.execute
+      end
+    end
+
   end
 end
