@@ -18,17 +18,14 @@ module Acmesmith
         puts "=> ENV: COMMON_NAME=#{@common_name}"
         puts "=> Running: #{@command}"
 
-        stdout, stderr, status = Open3.capture3({"COMMON_NAME" => @common_name}, "#{@command};")
+        status = system({"COMMON_NAME" => @common_name}, "#{@command};")
 
-        if status != 0
+        unless status
           if @ignore_failure
-            puts "WARNING"
-            puts stderr
+            $stderr.puts "WARNING, command failed"
           else
-            raise "FATAL\n#{stderr}"
+            raise "FATAL, command failed"
           end
-        else
-          puts stdout
         end
       end
     end

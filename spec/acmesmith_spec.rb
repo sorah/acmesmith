@@ -23,12 +23,12 @@ describe Acmesmith do
 
   it 'should fail and raise for allow.no.failing.example.com' do
     args = ["post_issue_hooks", "allow.no.failing.example.com", '-c', 'spec/config.mock.yml']
-    expect { Acmesmith::Command.start(args) }.to raise_error(/No such file or directory/)
+    expect { Acmesmith::Command.start(args) }.to raise_error(/FATAL/)
   end
 
   it 'should fail and continue for allow.failing.example.com' do
     args = ["post_issue_hooks", "allow.failing.example.com", '-c', 'spec/config.mock.yml']
-    expect { Acmesmith::Command.start(args) }.to output(/WARNING/).to_stdout
+    expect { Acmesmith::Command.start(args) }.to output(/WARNING/).to_stderr
   end
 
 end
