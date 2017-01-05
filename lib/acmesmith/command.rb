@@ -225,8 +225,10 @@ module Acmesmith
 
     def execute_post_issue_hooks(common_name)
       post_issues_hooks_for_common_name = config.post_issueing_hooks(common_name)
-      post_issues_hooks_for_common_name.each do |hook|
-        hook.execute
+      if post_issues_hooks_for_common_name
+        post_issues_hooks_for_common_name.each do |hook|
+          hook.execute
+        end
       end
     end
 
