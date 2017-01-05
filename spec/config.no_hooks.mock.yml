@@ -1,0 +1,11 @@
+endpoint: https://acme-staging.api.letsencrypt.org/
+
+storage:
+   type: filesystem
+   path: ./test/storage
+
+challenge_responders:
+  - route53: {}
+
+account_key_passphrase: password
+certificate_key_passphrase: secret

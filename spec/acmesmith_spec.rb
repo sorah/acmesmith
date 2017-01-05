@@ -12,12 +12,15 @@ describe Acmesmith do
     expect { Acmesmith::Command.start(args) }.to output(/authz/).to_stdout
   end
 
-  it 'should merge and execute post issueing hooks' do
+  it 'should execute when no hooks are defines' do
+    args = ["post_issue_hooks", "admin.example.com", '-c', 'spec/config.no_hooks.mock.yml']
+    expect { Acmesmith::Command.start(args) }.to output(//).to_stdout
+  end
 
+  it 'should merge and execute post issueing hooks' do
     args = ["post_issue_hooks", "admin.example.com", '-c', 'spec/config.mock.yml']
     expect { Acmesmith::Command.start(args) }.to output(/Running: echo \$COMMON_NAME > \/tmp\/step003-/).to_stdout
     content = File.read("/tmp/step003-admin.example.com")
-
     expect(content).to eq("admin.example.com\n")
   end
 
