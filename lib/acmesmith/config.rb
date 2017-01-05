@@ -56,7 +56,7 @@ module Acmesmith
     end
 
     def challenge_responders
-      @challange_responders ||= begin
+      @challenge_responders ||= begin
         specs = @config['challenge_responders'].kind_of?(Hash) ? @config['challenge_responders'].map { |k,v| [k => v] } : @config['challenge_responders']
         specs.flat_map do |specs_sub|
           specs_sub.map do |k, v|
