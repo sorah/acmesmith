@@ -141,10 +141,12 @@ challenge_responders:
 
 ### Post Issueing Hooks
 
-Post issueing Hooks are per-domain configured commands that are executed
-when an issueing request has been succesfully made. The commands are
-sequentially executed in the same order as they are configured.
-${COMMON_NAME} will be substituted with the domain name.
+Post issueing hooks are configurable actions that are executed
+when a new certificate has been succesfully issued. The hooks are
+sequentially executed in the same order as they are configured, and they
+are configurable per certificate's common-name.
+
+Currently `shell` action is available out of the box. It sets `COMMON_NAME` environment variable for use in a script.
 
 ```
 post_issueing_hooks:
