@@ -10,12 +10,10 @@ This tool is written in Ruby, but Acmesmith saves certificates in simple scheme,
 - ACME registration, domain authorization, certificate requests 
   - Tested against [Let's encrypt](https://letsencrypt.org)
 - Storing keys in several ways
-  - Currently AWS S3 is supported
 - Challenge response
-  - Currently `dns-01` with AWS Route 53 is supported
-- Pluggable modules, you can use 3rd party one or write:
-  - Storages for other than AWS S3
-  - Challenge reponses for other than AWS Route53 or dns-01 challenges, like for Openstack DNSaaS.
+- Many cloud services support
+  - AWS S3 storage and Route53 `dns-01` responder support out-of-the-box
+  - 3rd party plugins available for OpenStack designate, Google Cloud DNS, simple http-01, and Google Cloud Storage. See [Plugins](#3rd-party-plugins) below
 
 ### Planned
 
