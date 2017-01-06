@@ -141,6 +141,25 @@ challenge_responders:
       #   "example.org.": "/hostedzone/DEADBEEF"
 ```
 
+### Post Issueing Hooks
+
+Post issueing Hooks are per-domain configured commands that are executed
+when an issueing request has been succesfully made. The commands are
+sequentially executed in the same order as they are configured.
+${COMMON_NAME} will be substituted with the domain name.
+
+```
+post_issueing_hooks:
+  "test.example.com":
+    - shell:
+        command: mail -s "New cert for ${COMMON_NAME} has been issued" user@example.com < /dev/null
+    - shell:
+        command: touch /tmp/certs-has-been-issued-${COMMON_NAME}
+  "admin.example.com":
+    - shell:
+        command: /usr/bin/dosomethingelse ${COMMON_NAME}
+```
+
 ## 3rd party Plugins
 
 ### Challenge responders
