@@ -33,7 +33,7 @@ module Acmesmith
           self.key_passphrase = key_passphrase 
         else
           begin
-            @private_key = OpenSSL::PKey::RSA.new(@raw_private_key, '')
+            @private_key = OpenSSL::PKey::RSA.new(@raw_private_key) { nil }
           rescue OpenSSL::PKey::RSAError
             # may be encrypted
           end
