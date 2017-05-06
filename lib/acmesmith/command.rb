@@ -22,35 +22,54 @@ module Acmesmith
       puts "Generated:\n#{key.private_key.public_key.to_pem}"
     end
 
-    desc "authorize DOMAIN", "Get authz for DOMAIN."
-    def authorize(domain)
-      authz = acme.authorize(domain: domain)
-
-      challenges = [authz.http01, authz.dns01, authz.tls_sni01].compact
-
-      challenge = nil
-      responder = config.challenge_responders.find do |x|
-        challenge = challenges.find { |_| x.support?(_.class::CHALLENGE_TYPE) }
+    desc "authorize DOMAIN [DOMAIN ...]", "Get authz for DOMAIN."
+    def authorize(*domains)
+      targets = domains.map do |domain|
+        authz = acme.authorize(domain: domain)
+        challenges = [authz.http01, authz.dns01, authz.tls_sni01].compact
+        challenge = nil
+        responder = config.challenge_responders.find do |x|
+          challenge = challenges.find { |_| x.support?(_.class::CHALLENGE_TYPE) }
+        end
+        {domain: domain, authz: authz, responder: responder, challenge: challenge}
       end
 
-      responder.respond(domain, challenge)
-
       begin
-        puts "=> Requesting verification..."
-        challenge.request_verification
-        loop do
-          status = challenge.verify_status
-          puts " * verify_status: #{status}"
-          break if status == 'valid'
-          if status == "invalid"
-            err = challenge.error
-            puts "#{err["type"]}: #{err["detail"]}"
-          end
-          sleep 3
+        targets.each do |target|
+          target[:responder].respond(target[:domain], target[:challenge])
         end
-        puts "=> Done"
+
+        targets.each do |target|
+          puts "=> Requesting verifications..."
+          target[:challenge].request_verification
+        end
+          loop do
+            all_valid = true
+            targets.each do |target|
+              next if target[:valid]
+
+              status = target[:challenge].verify_status
+              puts " * [#{target[:domain]}] verify_status: #{status}"
+
+              if status == 'valid'
+                target[:valid] = true
+                next
+              end
+
+              all_valid = false
+              if status == "invalid"
+                err = target[:challenge].error
+                puts " ! [#{target[:domain]}] #{err["type"]}: #{err["detail"]}"
+              end
+            end
+            break if all_valid
+            sleep 3
+          end
+          puts "=> Done"
       ensure
-        responder.cleanup(domain, challenge)
+        targets.each do |target|
+          target[:responder].cleanup(target[:domain], target[:challenge])
+        end
       end
     end
 
