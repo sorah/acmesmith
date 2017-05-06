@@ -36,6 +36,10 @@ module Acmesmith
       @config['certificate_key_passphrase']
     end
 
+    def auto_authorize_on_request
+      @config.fetch('auto_authorize_on_request', true)
+    end
+
     def storage
       @storage ||= begin
         c = @config['storage'].dup

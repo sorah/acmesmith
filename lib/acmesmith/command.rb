@@ -76,7 +76,27 @@ module Acmesmith
     desc "request COMMON_NAME [SAN]", "request certificate for CN +COMMON_NAME+ with SANs +SAN+"
     def request(common_name, *sans)
       csr = Acme::Client::CertificateRequest.new(common_name: common_name, names: sans)
-      acme_cert = acme.new_certificate(csr)
+      retried = false
+      acme_cert = begin
+        acme.new_certificate(csr)
+      rescue Acme::Client::Error::Unauthorized => e
+        raise unless config.auto_authorize_on_request
+
+        puts "=> Authorizing unauthorized domain names"
+        # https://github.com/letsencrypt/boulder/blob/b9369a481415b3fe31e010b34e2ff570b89e42aa/ra/ra.go#L604
+        m = e.message.match(/authorizations for these names not found or expired: ((?:[a-zA-Z0-9_.\-]+(?:,\s+|$))+)/)
+        if m && m[1]
+          domains = m[1].split(/,\s+/)
+        else
+          warn " ! Error message on certificate request was #{e.message.inspect} and acmesmith couldn't determine which domain names are unauthorized (maybe a bug)"
+          warn " ! Attempting to authorize all domains in this certificate reuqest for now."
+          domains = [common_name, *sans]
+        end
+        puts " * #{domains.join(', ')}"
+        authorize(*domains)
+        retried = true
+        retry unless retried
+      end
 
       cert = Certificate.from_acme_client_certificate(acme_cert)
       storage.put_certificate(cert, certificate_key_passphrase)
