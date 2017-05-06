@@ -81,6 +81,7 @@ module Acmesmith
         acme.new_certificate(csr)
       rescue Acme::Client::Error::Unauthorized => e
         raise unless config.auto_authorize_on_request
+        raise if retried
 
         puts "=> Authorizing unauthorized domain names"
         # https://github.com/letsencrypt/boulder/blob/b9369a481415b3fe31e010b34e2ff570b89e42aa/ra/ra.go#L604
@@ -95,7 +96,7 @@ module Acmesmith
         puts " * #{domains.join(', ')}"
         authorize(*domains)
         retried = true
-        retry unless retried
+        retry
       end
 
       cert = Certificate.from_acme_client_certificate(acme_cert)
