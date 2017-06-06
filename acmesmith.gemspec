@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.name          = "acmesmith-ruby-client"
   spec.version       = Acmesmith::VERSION
   spec.authors       = ["sorah (Shota Fukumori)", "bitsapien (Rahul C)"]
-  spec.email         = ["her@sorah.jp"]
+  spec.email         = ["her@sorah.jp", "bitsapien@gmail.com"]
 
   spec.summary       = %q{ACME client (Let's encrypt client) to manage certificate in multi server environment with cloud services (e.g. AWS)}
   spec.description   = <<-EOF
