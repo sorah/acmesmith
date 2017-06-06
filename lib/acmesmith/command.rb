@@ -94,6 +94,12 @@ module Acmesmith
       acmesmith_client.autorenew(options[:days])
     end
 
+    desc "renew", "request renewal of certificates which expires soon"
+    method_option :days, type: :numeric, aliases: %w(-d), default: 7, desc: 'specify threshold in days to select certificates to renew'
+    def renew
+      acmesmith_client.renew(options[:days])
+    end
+
     desc "add-san COMMON_NAME [ADDITIONAL_SANS]", "request renewal of existing certificate with additional SANs"
     def add_san(common_name, *add_sans)
       acmesmith_client.add_san(common_name, *add_sans)

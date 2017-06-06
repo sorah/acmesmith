@@ -187,6 +187,26 @@ module Acmesmith
       end
     end
 
+    def renew(days)
+      storage.list_certificates.each do |cn|
+        puts "=> #{cn}"
+        cert = storage.get_certificate(cn)
+        not_after = cert.certificate.not_after.utc
+
+        puts "   Not valid after: #{not_after}"
+        # next unless (cert.certificate.not_after.utc - Time.now.utc) < (days.to_i * 86400)
+        expired = (cert.certificate.not_after.utc - Time.now.utc) < (days.to_i * 86400)
+
+        unless expired
+          post_issue_hooks(cn) unless (current(cn) == File.read(config['current_certificate_hash_path']))
+          next
+        end
+
+        puts " * Renewing: CN=#{cert.common_name}, SANs=#{cert.sans.join(',')}"
+        request(cert.common_name, *cert.sans)
+      end
+    end
+
     def add_san(common_name, *add_sans)
       puts "=> reissuing CN=#{common_name} with new SANs #{add_sans.join(?,)}"
       cert = storage.get_certificate(common_name)
