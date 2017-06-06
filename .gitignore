@@ -11,3 +11,4 @@ acmesmith.yml
 config.yml
 config.dev.yml
 /storage/
+*.gem
