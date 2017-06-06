@@ -1,6 +1,7 @@
 require 'thor'
 
 require 'acmesmith/client'
+require 'acmesmith/config'
 
 module Acmesmith
   class Command < Thor
