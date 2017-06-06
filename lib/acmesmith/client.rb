@@ -72,7 +72,7 @@ module Acmesmith
       end
     end
 
-    def request(common_name, *sans)
+    def request(common_name, sans: [])
       csr = Acme::Client::CertificateRequest.new(common_name: common_name, names: sans)
       retried = false
       acme_cert = begin

@@ -21,7 +21,7 @@ module Acmesmith
 
     desc "request COMMON_NAME [SAN]", "request certificate for CN +COMMON_NAME+ with SANs +SAN+"
     def request(common_name, *sans)
-      cert = acmesmith_client.request(common_name, *sans)
+      cert = acmesmith_client.request(common_name, sans: *sans)
       puts cert.certificate.to_text
       puts cert.certificate.to_pem
     end
