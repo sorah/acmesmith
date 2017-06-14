@@ -1,4 +1,3 @@
-# require 'acmesmith/config'
 require 'spec_helper'
 require 'acmesmith/command'
 

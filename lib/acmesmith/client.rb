@@ -1,4 +1,3 @@
-# require 'acmesmith/config'
 require 'acmesmith/account_key'
 require 'acmesmith/certificate'
 
