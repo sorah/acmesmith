@@ -100,7 +100,7 @@ module Acmesmith
       storage.put_certificate(cert, certificate_key_passphrase)
 
       execute_post_issue_hooks(common_name)
-
+      
       cert
     end
 
@@ -120,7 +120,7 @@ module Acmesmith
       storage.get_current_certificate_version(common_name)
     end
 
-    def show_certificate(common_name, version: 'current', type: 'text')
+    def get_certificate(common_name, version: 'current', type: 'text')
       cert = storage.get_certificate(common_name, version: version)
 
       certs = []
@@ -146,7 +146,7 @@ module Acmesmith
       end
     end
 
-    def show_private_key(common_name, version: 'current')
+    def get_private_key(common_name, version: 'current')
       cert = storage.get_certificate(common_name, version: version)
       cert.key_passphrase = certificate_key_passphrase if certificate_key_passphrase
 
@@ -168,7 +168,7 @@ module Acmesmith
       raise 'No Passphrase Provided' if passphrase.nil?
       
       p12 = OpenSSL::PKCS12.create(passphrase, cert.common_name, cert.private_key, cert.certificate)
-      File.open(options[:output], 'w', options[:mode].to_i(8)) do |f|
+      File.open(output, 'w', mode.to_i(8)) do |f|
         f.puts p12.to_der
       end
     end

@@ -1,5 +1,6 @@
 require 'thor'
 
+require 'acmesmith/config'
 require 'acmesmith/client'
 
 module Acmesmith
@@ -45,7 +46,7 @@ module Acmesmith
     method_option :version, type: :string, default: 'current'
     method_option :type, type: :string, enum: %w(text certificate chain fullchain), default: 'text'
     def show_certificate(common_name)
-      certs = client.show_certificate(common_name, version: options[:version], type: options[:type])
+      certs = client.get_certificate(common_name, version: options[:version], type: options[:type])
       puts certs
     end
     map 'show-certiticate' => :show_certificate
@@ -61,7 +62,7 @@ module Acmesmith
     desc "show-private-key COMMON_NAME", "show private key"
     method_option :version, type: :string, default: 'current'
     def show_private_key(common_name)
-      puts client.show_private_key(common_name, version: options[:version])
+      puts client.get_private_key(common_name, version: options[:version])
     end
     map 'show-private-key' => :show_private_key
 

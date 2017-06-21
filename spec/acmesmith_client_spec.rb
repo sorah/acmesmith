@@ -5,7 +5,7 @@ describe Acmesmith do
     expect(Acmesmith::VERSION).not_to be nil
   end
 
-  it 'should execute when no hooks are defines' do
+  it 'should execute when no hooks are defined' do
     acmesmith_client = Acmesmith::Client.new(config: Acmesmith::Config.load_yaml('spec/config.no_hooks.mock.yml'))
     expect { acmesmith_client.post_issue_hooks("admin.example.com") }.to_not raise_error
   end
