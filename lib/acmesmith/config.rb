@@ -28,6 +28,10 @@ module Acmesmith
       @config[key]
     end
 
+    def merge!(pair)
+      @config.merge!(pair)
+    end
+
     def account_key_passphrase
       @config['account_key_passphrase']
     end

@@ -1,11 +1,8 @@
-require 'acmesmith/config'
 require 'spec_helper'
+require 'acmesmith/command'
+
 
 describe Acmesmith do
-  it 'has a version number' do
-    expect(Acmesmith::VERSION).not_to be nil
-  end
-
   it 'should display help' do
     args = ["help"]
     expect { Acmesmith::Command.start(args) }.to output(/Commands:/).to_stdout

@@ -1,10 +1,7 @@
 require 'thor'
 
 require 'acmesmith/config'
-require 'acmesmith/account_key'
-require 'acmesmith/certificate'
-
-require 'acme-client'
+require 'acmesmith/client'
 
 module Acmesmith
   class Command < Thor
@@ -13,138 +10,44 @@ module Acmesmith
 
     desc "register CONTACT", "Create account key (contact e.g. mailto:xxx@example.org)"
     def register(contact)
-      key = AccountKey.generate
-      acme = Acme::Client.new(private_key: key.private_key, endpoint: config['endpoint'])
-      registration = acme.register(contact: contact)
-      registration.agree_terms
-
-      storage.put_account_key(key, account_key_passphrase)
+      key = client.register(contact)
       puts "Generated:\n#{key.private_key.public_key.to_pem}"
     end
 
     desc "authorize DOMAIN [DOMAIN ...]", "Get authz for DOMAIN."
     def authorize(*domains)
-      targets = domains.map do |domain|
-        authz = acme.authorize(domain: domain)
-        challenges = [authz.http01, authz.dns01, authz.tls_sni01].compact
-        challenge = nil
-        responder = config.challenge_responders.find do |x|
-          challenge = challenges.find { |_| x.support?(_.class::CHALLENGE_TYPE) }
-        end
-        {domain: domain, authz: authz, responder: responder, challenge: challenge}
-      end
-
-      begin
-        targets.each do |target|
-          target[:responder].respond(target[:domain], target[:challenge])
-        end
-
-        targets.each do |target|
-          puts "=> Requesting verifications..."
-          target[:challenge].request_verification
-        end
-          loop do
-            all_valid = true
-            targets.each do |target|
-              next if target[:valid]
-
-              status = target[:challenge].verify_status
-              puts " * [#{target[:domain]}] verify_status: #{status}"
-
-              if status == 'valid'
-                target[:valid] = true
-                next
-              end
-
-              all_valid = false
-              if status == "invalid"
-                err = target[:challenge].error
-                puts " ! [#{target[:domain]}] #{err["type"]}: #{err["detail"]}"
-              end
-            end
-            break if all_valid
-            sleep 3
-          end
-          puts "=> Done"
-      ensure
-        targets.each do |target|
-          target[:responder].cleanup(target[:domain], target[:challenge])
-        end
-      end
+      client.authorize(*domains)
     end
 
     desc "request COMMON_NAME [SAN]", "request certificate for CN +COMMON_NAME+ with SANs +SAN+"
     def request(common_name, *sans)
-      csr = Acme::Client::CertificateRequest.new(common_name: common_name, names: sans)
-      retried = false
-      acme_cert = begin
-        acme.new_certificate(csr)
-      rescue Acme::Client::Error::Unauthorized => e
-        raise unless config.auto_authorize_on_request
-        raise if retried
-
-        puts "=> Authorizing unauthorized domain names"
-        # https://github.com/letsencrypt/boulder/blob/b9369a481415b3fe31e010b34e2ff570b89e42aa/ra/ra.go#L604
-        m = e.message.match(/authorizations for these names not found or expired: ((?:[a-zA-Z0-9_.\-]+(?:,\s+|$))+)/)
-        if m && m[1]
-          domains = m[1].split(/,\s+/)
-        else
-          warn " ! Error message on certificate request was #{e.message.inspect} and acmesmith couldn't determine which domain names are unauthorized (maybe a bug)"
-          warn " ! Attempting to authorize all domains in this certificate reuqest for now."
-          domains = [common_name, *sans]
-        end
-        puts " * #{domains.join(', ')}"
-        authorize(*domains)
-        retried = true
-        retry
-      end
-
-      cert = Certificate.from_acme_client_certificate(acme_cert)
-      storage.put_certificate(cert, certificate_key_passphrase)
-
+      cert = client.request(common_name, *sans)
       puts cert.certificate.to_text
       puts cert.certificate.to_pem
-
-      execute_post_issue_hooks(common_name)
     end
 
     desc "post-issue-hooks COMMON_NAME", "Run all post-issueing hooks for common name. (for testing purpose)"
     def post_issue_hooks(common_name)
-      execute_post_issue_hooks(common_name)
+      client.post_issue_hooks(common_name)
     end
     map 'post-issue-hooks' => :post_issue_hooks
 
     desc "list [COMMON_NAME]", "list certificates or its versions"
     def list(common_name = nil)
-      if common_name
-        puts storage.list_certificate_versions(common_name).sort
-      else
-        puts storage.list_certificates.sort
-      end
+      puts client.list(common_name)
     end
 
     desc "current COMMON_NAME", "show current version for certificate"
     def current(common_name)
-      puts storage.get_current_certificate_version(common_name)
+      puts client.current(common_name)
     end
 
     desc "show-certificate COMMON_NAME", "show certificate"
     method_option :version, type: :string, default: 'current'
     method_option :type, type: :string, enum: %w(text certificate chain fullchain), default: 'text'
     def show_certificate(common_name)
-      cert = storage.get_certificate(common_name, version: options[:version])
-
-      case options[:type]
-      when 'text'
-        puts cert.certificate.to_text
-        puts cert.certificate.to_pem
-      when 'certificate'
-        puts cert.certificate.to_pem
-      when 'chain'
-        puts cert.chain
-      when 'fullchain'
-        puts cert.fullchain
-      end
+      certs = client.get_certificate(common_name, version: options[:version], type: options[:type])
+      puts certs
     end
     map 'show-certiticate' => :show_certificate
 
@@ -153,19 +56,13 @@ module Acmesmith
     method_option :output, type: :string, required: true, banner: 'PATH', desc: 'Path to output file'
     method_option :mode, type: :string, default: '0600', desc: 'Mode (permission) of the output file on create'
     def save_certificate(common_name)
-      cert = storage.get_certificate(common_name, version: options[:version])
-      File.open(options[:output], 'w', options[:mode].to_i(8)) do |f|
-        f.puts(cert.fullchain)
-      end
+      client.save_certificate(common_name, version: options[:version], mode: options[:mode], output: options[:output])
     end
 
     desc "show-private-key COMMON_NAME", "show private key"
     method_option :version, type: :string, default: 'current'
     def show_private_key(common_name)
-      cert = storage.get_certificate(common_name, version: options[:version])
-      cert.key_passphrase = certificate_key_passphrase if certificate_key_passphrase
-
-      puts cert.private_key.to_pem
+      puts client.get_private_key(common_name, version: options[:version])
     end
     map 'show-private-key' => :show_private_key
 
@@ -174,11 +71,7 @@ module Acmesmith
     method_option :output, type: :string, required: true, banner: 'PATH', desc: 'Path to output file'
     method_option :mode, type: :string, default: '0600', desc: 'Mode (permission) of the output file on create'
     def save_private_key(common_name)
-      cert = storage.get_certificate(common_name, version: options[:version])
-      cert.key_passphrase = certificate_key_passphrase if certificate_key_passphrase
-      File.open(options[:output], 'w', options[:mode].to_i(8)) do |f|
-        f.puts(cert.private_key)
-      end
+      client.save_private_key(common_name, version: options[:version], mode: options[:mode], output: options[:output])
     end
 
     desc 'save-pkcs12 COMMON_NAME', 'Save ceriticate and private key to .p12 file'
@@ -186,9 +79,6 @@ module Acmesmith
     method_option :output, type: :string, required: true, banner: 'PATH', desc: 'Path to output file'
     method_option :mode, type: :string, default: '0600', desc: 'Mode (permission) of the output file on create'
     def save_pkcs12(common_name)
-      cert = storage.get_certificate(common_name, version: options[:version])
-      cert.key_passphrase = certificate_key_passphrase if certificate_key_passphrase
-
       print 'Passphrase: '
       passphrase = $stdin.noecho { $stdin.gets }.chomp
       print "\nPassphrase (confirm): "
@@ -196,81 +86,26 @@ module Acmesmith
       puts
 
       raise ArgumentError, "Passphrase doesn't match" if passphrase != passphrase2
-
-      p12 = OpenSSL::PKCS12.create(passphrase, cert.common_name, cert.private_key, cert.certificate)
-      File.open(options[:output], 'w', options[:mode].to_i(8)) do |f|
-        f.puts p12.to_der
-      end
+      client.save_pkcs12(common_name, version: options[:version], mode: options[:mode], output: options[:output], passphrase: passphrase)
     end
 
     desc "autorenew", "request renewal of certificates which expires soon"
     method_option :days, type: :numeric, aliases: %w(-d), default: 7, desc: 'specify threshold in days to select certificates to renew'
     def autorenew
-      storage.list_certificates.each do |cn|
-        puts "=> #{cn}"
-        cert = storage.get_certificate(cn)
-        not_after = cert.certificate.not_after.utc
-
-        puts "   Not valid after: #{not_after}"
-        next unless (cert.certificate.not_after.utc - Time.now.utc) < (options[:days].to_i * 86400)
-        puts " * Renewing: CN=#{cert.common_name}, SANs=#{cert.sans.join(',')}"
-        request(cert.common_name, *cert.sans)
-      end
+      client.autorenew(options[:days])
     end
 
     desc "add-san COMMON_NAME [ADDITIONAL_SANS]", "request renewal of existing certificate with additional SANs"
     def add_san(common_name, *add_sans)
-      puts "=> reissuing CN=#{common_name} with new SANs #{add_sans.join(?,)}"
-      cert = storage.get_certificate(common_name)
-      sans = cert.sans + add_sans
-      puts " * SANs will be: #{sans.join(?,)}"
-      request(cert.common_name, *sans)
+      client.add_san(common_name, *add_sans)
     end
 
     private
 
-    def config
-      @config ||= Config.load_yaml(options[:config])
+    def client
+      config = Config.load_yaml(options[:config])
+      config.merge!("passphrase_from_env" => options[:passphrase_from_env]) unless options[:passphrase_from_env].nil?
+      @client = Client.new(config: config)
     end
-
-    def storage
-      config.storage
-    end
-
-    def account_key
-      @account_key ||= storage.get_account_key.tap do |x|
-        x.key_passphrase = account_key_passphrase if account_key_passphrase
-      end
-    end
-
-    def acme
-      @acme ||= Acme::Client.new(private_key: account_key.private_key, endpoint: config['endpoint'])
-    end
-
-    def certificate_key_passphrase
-      if options[:passphrase_from_env] || config['passphrase_from_env']
-        ENV['ACMESMITH_CERTIFICATE_KEY_PASSPHRASE'] || config['certificate_key_passphrase']
-      else
-        config['certificate_key_passphrase']
-      end
-    end
-
-    def account_key_passphrase
-      if options[:passphrase_from_env] || config['passphrase_from_env']
-        ENV['ACMESMITH_ACCOUNT_KEY_PASSPHRASE'] || config['account_key_passphrase']
-      else
-        config['account_key_passphrase']
-      end
-    end
-
-    def execute_post_issue_hooks(common_name)
-      post_issues_hooks_for_common_name = config.post_issueing_hooks(common_name)
-      if post_issues_hooks_for_common_name
-        post_issues_hooks_for_common_name.each do |hook|
-          hook.execute
-        end
-      end
-    end
-
   end
 end
