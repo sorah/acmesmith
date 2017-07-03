@@ -5,7 +5,6 @@ require 'acme-client'
 
 module Acmesmith
   class Client
-
     def initialize(config: nil)
       @config ||= config
     end
@@ -164,8 +163,6 @@ module Acmesmith
     def save_pkcs12(common_name, version: 'current', mode: '0600', output:, passphrase:)
       cert = storage.get_certificate(common_name, version: version)
       cert.key_passphrase = certificate_key_passphrase if certificate_key_passphrase
-      
-      raise 'No Passphrase Provided' if passphrase.nil?
       
       p12 = OpenSSL::PKCS12.create(passphrase, cert.common_name, cert.private_key, cert.certificate)
       File.open(output, 'w', mode.to_i(8)) do |f|
