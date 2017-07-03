@@ -103,8 +103,13 @@ module Acmesmith
       cert
     end
 
-    def post_issue_hooks(common_name)
-      execute_post_issue_hooks(common_name)
+    def execute_post_issue_hooks(common_name)
+      post_issues_hooks_for_common_name = config.post_issueing_hooks(common_name)
+      if post_issues_hooks_for_common_name
+        post_issues_hooks_for_common_name.each do |hook|
+          hook.execute
+        end
+      end
     end
 
     def list(common_name = nil)
@@ -227,14 +232,6 @@ module Acmesmith
       end
     end
 
-    def execute_post_issue_hooks(common_name)
-      post_issues_hooks_for_common_name = config.post_issueing_hooks(common_name)
-      if post_issues_hooks_for_common_name
-        post_issues_hooks_for_common_name.each do |hook|
-          hook.execute
-        end
-      end
-    end
 
   end
 end
