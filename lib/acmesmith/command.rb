@@ -34,7 +34,11 @@ module Acmesmith
 
     desc "list [COMMON_NAME]", "list certificates or its versions"
     def list(common_name = nil)
-      puts client.list(common_name)
+      if common_name
+        puts client.certificate_versions(common_name)
+      else
+        puts client.certificates_list
+      end
     end
 
     desc "current COMMON_NAME", "show current version for certificate"

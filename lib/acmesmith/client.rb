@@ -112,12 +112,12 @@ module Acmesmith
       end
     end
 
-    def list(common_name = nil)
-      if common_name
-        storage.list_certificate_versions(common_name).sort
-      else
-        storage.list_certificates.sort
-      end
+    def certificate_versions(common_name)
+      storage.list_certificate_versions(common_name).sort
+    end
+
+    def certificates_list
+      storage.list_certificates.sort
     end
 
     def current(common_name)
@@ -231,7 +231,5 @@ module Acmesmith
         config['account_key_passphrase']
       end
     end
-
-
   end
 end
