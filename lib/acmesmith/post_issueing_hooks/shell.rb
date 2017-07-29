@@ -18,7 +18,7 @@ module Acmesmith
         puts "=> ENV: COMMON_NAME=#{@common_name}"
         puts "=> Running: #{@command}"
 
-        status = system({"COMMON_NAME" => @common_name}, "#{@command};")
+        status = system({"COMMON_NAME" => common_name}, @command)
 
         unless status
           if @ignore_failure
