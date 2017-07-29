@@ -22,9 +22,9 @@ module Acmesmith
 
         unless status
           if @ignore_failure
-            $stderr.puts "WARNING, command failed"
+            $stderr.puts " ! execution failed"
           else
-            raise "FATAL, command failed"
+            raise "Execution failed"
           end
         end
       end
