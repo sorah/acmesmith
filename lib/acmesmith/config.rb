@@ -52,16 +52,16 @@ module Acmesmith
     end
 
     def post_issueing_hooks(common_name)
-      @post_issueing_hooks ||= begin
-        if @config.key?('post_issueing_hooks') && @config['post_issueing_hooks'].key?(common_name)
-          specs = @config['post_issueing_hooks'][common_name]
-          specs.flat_map do |specs_sub|
-            specs_sub[specs_sub.flatten[0]]['common_name'] = common_name
-            specs_sub.map do |k, v|
-              PostIssueingHooks.find(k).new(**v.map{ |k_,v_| [k_.to_sym, v_]}.to_h)
-            end
+      if @config.key?('post_issueing_hooks') && @config['post_issueing_hooks'].key?(common_name)
+        specs = @config['post_issueing_hooks'][common_name]
+        specs.flat_map do |specs_sub|
+          specs_sub[specs_sub.flatten[0]]['common_name'] = common_name
+          specs_sub.map do |k, v|
+            PostIssueingHooks.find(k).new(**v.map{ |k_,v_| [k_.to_sym, v_]}.to_h)
           end
         end
+      else
+        []
       end
     end
 
