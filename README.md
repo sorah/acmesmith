@@ -146,7 +146,9 @@ when a new certificate has been succesfully issued. The hooks are
 sequentially executed in the same order as they are configured, and they
 are configurable per certificate's common-name.
 
-Currently `shell` action is available out of the box. It sets `COMMON_NAME` environment variable for use in a script.
+#### `shell`
+
+Execute specified command on a shell. Environment variable `${COMMON_NAME}` is available.
 
 ```
 post_issueing_hooks:
@@ -159,6 +161,21 @@ post_issueing_hooks:
     - shell:
         command: /usr/bin/dosomethingelse ${COMMON_NAME}
 ```
+
+### `acm`
+
+Import certificate into AWS ACM.
+
+```
+post_issueing_hooks:
+  "test.example.com":
+    - acm:
+        region: us-east-1 # required
+        certificate_arn: arn:aws:acm:... # (optional)
+```
+
+When `certificate_arn` is not present, `acm` hook attempts to find the certificate ARN from existing certificate list. Certificate with same common name ("domain name" on ACM), and `Acmesmith` tag
+ will be used. Otherwise, `acm` hook imports as a new certificate with `Acmesmith` tag.
 
 ## 3rd party Plugins
 
