@@ -98,17 +98,15 @@ module Acmesmith
       cert = Certificate.from_acme_client_certificate(acme_cert)
       storage.put_certificate(cert, certificate_key_passphrase)
 
-      execute_post_issue_hooks(common_name)
-      
+      execute_post_issue_hooks(cert)
+
       cert
     end
 
-    def execute_post_issue_hooks(common_name)
-      post_issues_hooks_for_common_name = config.post_issueing_hooks(common_name)
-      if post_issues_hooks_for_common_name
-        post_issues_hooks_for_common_name.each do |hook|
-          hook.execute
-        end
+    def execute_post_issue_hooks(certificate)
+      hooks = config.post_issueing_hooks(certificate.common_name)
+      hooks.each do |hook|
+        hook.run(certificate: certificate)
       end
     end
 
