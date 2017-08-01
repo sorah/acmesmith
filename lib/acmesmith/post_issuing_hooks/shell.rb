@@ -1,8 +1,8 @@
 require 'open3'
-require 'acmesmith/post_issueing_hooks/base'
+require 'acmesmith/post_issuing_hooks/base'
 
 module Acmesmith
-  module PostIssueingHooks
+  module PostIssuingHooks
     class Shell < Base
       def initialize(command:, ignore_failure: false)
         @command = command

@@ -1,7 +1,7 @@
 require 'yaml'
 require 'acmesmith/storages'
 require 'acmesmith/challenge_responders'
-require 'acmesmith/post_issueing_hooks'
+require 'acmesmith/post_issuing_hooks'
 
 module Acmesmith
   class Config
@@ -61,7 +61,7 @@ module Acmesmith
         specs = @config['post_issuing_hooks'][common_name]
         specs.flat_map do |specs_sub|
           specs_sub.map do |k, v|
-            PostIssueingHooks.find(k).new(**v.map{ |k_,v_| [k_.to_sym, v_]}.to_h)
+            PostIssuingHooks.find(k).new(**v.map{ |k_,v_| [k_.to_sym, v_]}.to_h)
           end
         end
       else

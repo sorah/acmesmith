@@ -1,8 +1,8 @@
 require 'aws-sdk'
-require 'acmesmith/post_issueing_hooks/base'
+require 'acmesmith/post_issuing_hooks/base'
 
 module Acmesmith
-  module PostIssueingHooks
+  module PostIssuingHooks
     class Acm < Base
       def initialize(certificate_arn: nil, region:)
         @certificate_arn = certificate_arn
