@@ -22,6 +22,11 @@ module Acmesmith
       unless @config['endpoint']
         raise ArgumentError, "config['endpoint'] must be provided, e.g. https://acme-v01.api.letsencrypt.org/ or https://acme-staging.api.letsencrypt.org/"
       end
+
+      if @config['post_issueing_hooks']
+        warn '!! Deprecation warning: configuration "post_issueing_hooks" is now "post_issuing_hooks" (what a typo!). It will not work in the future release.'
+        @config['post_issuing_hooks'] = @config.delete('post_issueing_hooks')
+      end
     end
 
     def [](key)
@@ -51,9 +56,9 @@ module Acmesmith
       end
     end
 
-    def post_issueing_hooks(common_name)
-      if @config.key?('post_issueing_hooks') && @config['post_issueing_hooks'].key?(common_name)
-        specs = @config['post_issueing_hooks'][common_name]
+    def post_issuing_hooks(common_name)
+      if @config.key?('post_issuing_hooks') && @config['post_issuing_hooks'].key?(common_name)
+        specs = @config['post_issuing_hooks'][common_name]
         specs.flat_map do |specs_sub|
           specs_sub.map do |k, v|
             PostIssueingHooks.find(k).new(**v.map{ |k_,v_| [k_.to_sym, v_]}.to_h)
