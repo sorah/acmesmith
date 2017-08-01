@@ -103,6 +103,11 @@ module Acmesmith
       cert
     end
 
+    def post_issue_hooks(common_name)
+      cert = storage.get_certificate(common_name)
+      execute_post_issue_hooks(cert)
+    end
+
     def execute_post_issue_hooks(certificate)
       hooks = config.post_issuing_hooks(certificate.common_name)
       hooks.each do |hook|
