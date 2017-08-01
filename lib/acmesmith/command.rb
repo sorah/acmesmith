@@ -26,7 +26,7 @@ module Acmesmith
       puts cert.certificate.to_pem
     end
 
-    desc "post-issue-hooks COMMON_NAME", "Run all post-issueing hooks for common name. (for testing purpose)"
+    desc "post-issue-hooks COMMON_NAME", "Run all post-issuing hooks for common name. (for testing purpose)"
     def post_issue_hooks(common_name)
       client.post_issue_hooks(common_name)
     end
