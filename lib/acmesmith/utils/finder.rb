@@ -1,7 +1,9 @@
 module Acmesmith
   module Utils
     module Finder
-      def self.find(const, prefix, name)
+      class NotFound < StandardError; end
+
+      def self.find(const, prefix, name, error: true)
         retried = false
         constant_name = name.to_s.gsub(/\A.|_./) { |s| s[-1].upcase }
 
@@ -18,7 +20,11 @@ module Acmesmith
             retry
           end
 
-          nil
+          if error
+            raise NotFound, "Couldn't find #{name.inspect} for #{const}"
+          else
+            nil
+          end
         end
       end
     end

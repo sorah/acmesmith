@@ -139,9 +139,9 @@ challenge_responders:
       #   "example.org.": "/hostedzone/DEADBEEF"
 ```
 
-### Post Issueing Hooks
+### Post Issuing Hooks
 
-Post issueing hooks are configurable actions that are executed
+Post issuing hooks are configurable actions that are executed
 when a new certificate has been succesfully issued. The hooks are
 sequentially executed in the same order as they are configured, and they
 are configurable per certificate's common-name.
@@ -151,7 +151,7 @@ are configurable per certificate's common-name.
 Execute specified command on a shell. Environment variable `${COMMON_NAME}` is available.
 
 ```
-post_issueing_hooks:
+post_issuing_hooks:
   "test.example.com":
     - shell:
         command: mail -s "New cert for ${COMMON_NAME} has been issued" user@example.com < /dev/null
@@ -167,7 +167,7 @@ post_issueing_hooks:
 Import certificate into AWS ACM.
 
 ```
-post_issueing_hooks:
+post_issuing_hooks:
   "test.example.com":
     - acm:
         region: us-east-1 # required

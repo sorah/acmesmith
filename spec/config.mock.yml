@@ -10,7 +10,7 @@ challenge_responders:
 account_key_passphrase: password
 certificate_key_passphrase: secret
 
-post_issueing_hooks:
+post_issuing_hooks:
   "test.example.com":
     - shell:
         command: touch /tmp/step001-${COMMON_NAME}

@@ -1,9 +1,5 @@
-require 'acmesmith/utils/finder'
+require 'acmesmith/post_issuing_hooks'
 
-module Acmesmith
-  module PostIssueingHooks
-    def self.find(name)
-      Utils::Finder.find(self, 'acmesmith/post_issueing_hooks', name)
-    end
-  end
-end
+warn "!! DEPRECATION WARNING: PostIssueingHooks is deprecated, use PostIssuingHooks (#{caller[0]})"
+
+

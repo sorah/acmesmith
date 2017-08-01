@@ -104,7 +104,7 @@ module Acmesmith
     end
 
     def execute_post_issue_hooks(certificate)
-      hooks = config.post_issueing_hooks(certificate.common_name)
+      hooks = config.post_issuing_hooks(certificate.common_name)
       hooks.each do |hook|
         hook.run(certificate: certificate)
       end

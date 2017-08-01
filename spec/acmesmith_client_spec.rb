@@ -10,7 +10,7 @@ describe Acmesmith do
     expect { acmesmith_client.post_issue_hooks("admin.example.com") }.to_not raise_error
   end
 
-  it 'should merge and execute post issueing hooks' do
+  it 'should merge and execute post issuing hooks' do
     acmesmith_client = Acmesmith::Client.new(config: Acmesmith::Config.load_yaml('spec/config.mock.yml'))
     acmesmith_client.post_issue_hooks("admin.example.com")
     content = File.read("/tmp/step003-admin.example.com")

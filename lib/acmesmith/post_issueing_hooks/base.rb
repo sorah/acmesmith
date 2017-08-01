@@ -1,21 +1,9 @@
+require 'acmesmith/post_issuing_hooks/base'
+
+warn "!! DEPRECATION WARNING: PostIssueingHooks::Base is deprecated, use PostIssuingHooks::Base (#{caller[0]})"
+
 module Acmesmith
   module PostIssueingHooks
-    class Base
-      attr_reader :certificate
-
-      def common_name
-        certificate.common_name
-      end
-
-      def run(certificate:)
-        @certificate = certificate
-        execute
-      end
-
-      def execute
-        raise NotImplementedError
-      end
-    end
+    Base = PostIssuingHooks::Base
   end
 end
-
