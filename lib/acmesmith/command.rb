@@ -57,10 +57,11 @@ module Acmesmith
 
     desc 'save-certificate COMMON_NAME', 'Save certificate to a file'
     method_option :version, type: :string, default: 'current'
+    method_option :type, type: :string, enum: %w(certificate chain fullchain), default: 'fullchain'
     method_option :output, type: :string, required: true, banner: 'PATH', desc: 'Path to output file'
     method_option :mode, type: :string, default: '0600', desc: 'Mode (permission) of the output file on create'
     def save_certificate(common_name)
-      client.save_certificate(common_name, version: options[:version], mode: options[:mode], output: options[:output])
+      client.save_certificate(common_name, version: options[:version], mode: options[:mode], output: options[:output], type: options[:type])
     end
 
     desc "show-private-key COMMON_NAME", "show private key"

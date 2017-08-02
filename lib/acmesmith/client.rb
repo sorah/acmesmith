@@ -146,10 +146,17 @@ module Acmesmith
       certs
     end
 
-    def save_certificate(common_name, version: 'current', mode: '0600', output:)
+    def save_certificate(common_name, version: 'current', mode: '0600', output:, type: 'fullchain')
       cert = storage.get_certificate(common_name, version: version)
       File.open(output, 'w', mode.to_i(8)) do |f|
-        f.puts(cert.fullchain)
+        case type
+        when 'certificate'
+          f.puts cert.certificate.to_pem
+        when 'chain'
+          f.puts cert.chain
+        when 'fullchain'
+          f.puts cert.fullchain
+        end
       end
     end
 
