@@ -178,8 +178,8 @@ module Acmesmith
       end
     end
 
-    def autorenew(days)
-      storage.list_certificates.each do |cn|
+    def autorenew(days: 7, common_names: nil)
+      (common_names || storage.list_certificates).each do |cn|
         puts "=> #{cn}"
         cert = storage.get_certificate(cn)
         not_after = cert.certificate.not_after.utc

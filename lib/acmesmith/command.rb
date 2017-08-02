@@ -93,10 +93,10 @@ module Acmesmith
       client.save_pkcs12(common_name, version: options[:version], mode: options[:mode], output: options[:output], passphrase: passphrase)
     end
 
-    desc "autorenew", "request renewal of certificates which expires soon"
+    desc "autorenew [COMMON_NAMES]", "request renewal of certificates which expires soon"
     method_option :days, type: :numeric, aliases: %w(-d), default: 7, desc: 'specify threshold in days to select certificates to renew'
-    def autorenew
-      client.autorenew(options[:days])
+    def autorenew(*common_names)
+      client.autorenew(days: options[:days], common_names: common_names.empty? ? nil : common_names)
     end
 
     desc "add-san COMMON_NAME [ADDITIONAL_SANS]", "request renewal of existing certificate with additional SANs"
