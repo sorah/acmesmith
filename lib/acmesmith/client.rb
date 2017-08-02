@@ -1,6 +1,8 @@
 require 'acmesmith/account_key'
 require 'acmesmith/certificate'
 
+require 'acmesmith/save_certificate_service'
+
 require 'acme-client'
 
 module Acmesmith
@@ -183,6 +185,13 @@ module Acmesmith
       File.open(output, 'w', mode.to_i(8)) do |f|
         f.puts p12.to_der
       end
+    end
+
+    def save(common_name, version: 'current', **kwargs)
+      cert = storage.get_certificate(common_name, version: version)
+      cert.key_passphrase = certificate_key_passphrase if certificate_key_passphrase
+
+      SaveCertificateService.new(cert, **kwargs).perform!
     end
 
     def autorenew(days: 7, common_names: nil)

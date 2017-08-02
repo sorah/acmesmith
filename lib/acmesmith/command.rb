@@ -79,6 +79,32 @@ module Acmesmith
       client.save_private_key(common_name, version: options[:version], mode: options[:mode], output: options[:output])
     end
 
+    desc 'save COMMON_NAME', 'Save (or update) certificate and key files.'
+    method_option :version, type: :string, default: 'current'
+    method_option :key_mode, type: :string, default: '0600', desc: 'Mode (permission) of the key file on create'
+    method_option :certificate_mode, type: :string, default: '0644', desc: 'Mode (permission) of the certificate files on create'
+    method_option :version_file, type: :string, required: false, banner: 'PATH', desc: 'Path to save a certificate version for following run (optional)'
+    method_option :key_file, type: :string, required: false, banner: 'PATH', desc: 'Path to save a key'
+    method_option :fullchain_file, type: :string, required: false , banner: 'PATH', desc: 'Path to save a certficiate and its chain (concatenated)'
+    method_option :chain_file, type: :string, required: false , banner: 'PATH', desc: 'Path to save a certificate chain (root and intermediate CA)'
+    method_option :certificate_file, type: :string, required: false, banner: 'PATH', desc: 'Path to save a certficiate'
+    method_option :atomic, type: :boolean, default: true, desc: 'Enable atomic file update with rename(2)'
+    def save(common_name)
+      client.save(
+        common_name,
+        version: options[:version],
+        key_mode: options[:key_mode],
+        certificate_mode: options[:certificate_mode],
+        version_file: options[:version_file],
+        key_file: options[:key_file],
+        fullchain_file: options[:fullchain_file],
+        chain_file: options[:chain_file],
+        certificate_file: options[:certificate_file],
+        atomic: options[:atomic],
+        verbose: true,
+      )
+    end
+
     desc 'save-pkcs12 COMMON_NAME', 'Save ceriticate and private key to .p12 file'
     method_option :version, type: :string, default: 'current'
     method_option :output, type: :string, required: true, banner: 'PATH', desc: 'Path to output file'

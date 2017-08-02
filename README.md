@@ -62,6 +62,14 @@ $ acmesmith save-pkcs12      COMMON_NAME --output=PATH  # Save certificate and p
 $ acmesmith autorenew [-d DAYS] # Renew certificates which being expired soon
 ```
 
+```
+# Save (or update) certificate files and key in a one command
+$ acmesmith save COMMON_NAME \
+      --version-file=/tmp/cert.txt   # Path to save a certificate version for following run 
+      --key-file=/tmp/cert.key       # Path to save a key
+      --fullchain-file=/tmp/cert.pem # Path to save a certficiate and its chain (concatenated)
+```
+
 See `acmesmith help [subcommand]` for more help.
 
 ## Configuration
