@@ -103,4 +103,20 @@ Be sure to replace `{S3-REGION}` and `{YOUR-AWS-ACCOUNT-ID}` before applying it.
 }
 ```
 
+#### Policy for ACM post issuing hook
+
+``` json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["acm:ImportCertificate", "acm:AddTagsToCertificate"],
+      "Resource": ["*"]
+    }
+  ]
+}
+```
+
+Optionally you can limit resource to certificate ARN(s).
 
