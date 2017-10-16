@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-acm'
 require 'acmesmith/post_issuing_hooks/base'
 
 module Acmesmith
