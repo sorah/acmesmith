@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-s3'
 
 require 'acmesmith/storages/base'
 require 'acmesmith/account_key'

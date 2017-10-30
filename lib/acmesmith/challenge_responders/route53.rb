@@ -1,6 +1,6 @@
 require 'acmesmith/challenge_responders/base'
 
-require 'aws-sdk'
+require 'aws-sdk-route53'
 
 module Acmesmith
   module ChallengeResponders
