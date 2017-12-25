@@ -1,9 +1,7 @@
 require 'acmesmith/account_key'
+require 'acmesmith/acme_client'
 require 'acmesmith/certificate'
-
 require 'acmesmith/save_certificate_service'
-
-require 'acme-client'
 
 module Acmesmith
   class Client
@@ -13,8 +11,8 @@ module Acmesmith
 
     def register(contact)
       key = AccountKey.generate
-      acme = Acme::Client.new(private_key: key.private_key, endpoint: config['endpoint'])
-      registration = acme.register(contact: contact)
+      acme = AcmeClient.new(key, config['endpoint'])
+      registration = acme.register(contact)
       registration.agree_terms
 
       storage.put_account_key(key, account_key_passphrase)
@@ -24,7 +22,7 @@ module Acmesmith
 
     def authorize(*domains)
       targets = domains.map do |domain|
-        authz = acme.authorize(domain: domain)
+        authz = acme.authorize(domain)
         challenges = [authz.http01, authz.dns01, authz.tls_sni01].compact
         challenge = nil
         responder = config.challenge_responders.find do |x|
@@ -40,14 +38,14 @@ module Acmesmith
 
         targets.each do |target|
           puts "=> Requesting verifications..."
-          target[:challenge].request_verification
+          acme.request_verification(target[:challenge])
         end
           loop do
             all_valid = true
             targets.each do |target|
               next if target[:valid]
 
-              status = target[:challenge].verify_status
+              status = acme.verify_status(target[:challenge])
               puts " * [#{target[:domain]}] verify_status: #{status}"
 
               if status == 'valid'
@@ -232,7 +230,7 @@ module Acmesmith
     end
 
     def acme
-      @acme ||= Acme::Client.new(private_key: account_key.private_key, endpoint: config['endpoint'])
+      @acme ||= AcmeClient.new(account_key, config['endpoint'])
     end
 
     def certificate_key_passphrase
