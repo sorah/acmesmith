@@ -5,7 +5,7 @@ module Acmesmith
     # @param account_key [Acmesmith::AccountKey]
     # @param endpoint [String]
     def initialize(account_key, endpoint)
-      @acme = Acme::Client.new(private_key: account_key.private_key, endpoint: config['endpoint'])
+      @acme = Acme::Client.new(private_key: account_key.private_key, endpoint: endpoint)
     end
 
     # @param contact [String]
