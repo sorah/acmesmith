@@ -1,3 +1,3 @@
 module Acmesmith
-  VERSION = "0.11.1"
+  VERSION = "2.0.0"
 end

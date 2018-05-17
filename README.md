@@ -1,4 +1,4 @@
-# Acmesmith: A simple, effective ACME client to use with many servers and a cloud
+# Acmesmith: A simple, effective ACME v2 client to use with many servers and a cloud
 
 Acmesmith is an [ACME (Automatic Certificate Management Environment)](https://github.com/ietf-wg-acme/acme) client that works perfect on environment with multiple servers. This client saves certificate and keys on cloud services (e.g. AWS S3) securely, then allow to deploy issued certificates onto your servers smoothly. This works well on [Let's encrypt](https://letsencrypt.org).
 
@@ -6,19 +6,14 @@ This tool is written in Ruby, but Acmesmith saves certificates in simple scheme,
 
 ## Features
 
-- ACME client designed to work on multiple servers
+- ACME v2 client designed to work on multiple servers
 - ACME registration, domain authorization, certificate requests 
   - Tested against [Let's encrypt](https://letsencrypt.org)
 - Storing keys in several ways
 - Challenge response
 - Many cloud services support
-  - AWS S3 storage and Route53 `dns-01` responder support out-of-the-box
+  - AWS S3 storage and Route 53 `dns-01` responder support out-of-the-box
   - 3rd party plugins available for OpenStack designate, Google Cloud DNS, simple http-01, and Google Cloud Storage. See [Plugins](#3rd-party-plugins) below
-
-### Planned
-
-- Automated deployments support (post issurance hook)
-- Example shellscripts to fetch certificates
 
 ## Installation
 
@@ -39,12 +34,11 @@ Or install it yourself as:
 ## Usage
 
 ```
-$ acmesmith register CONTACT              # Create account key (contact e.g. mailto:xxx@example.org)
+$ acmesmith new-account CONTACT              # Create account key (contact e.g. mailto:xxx@example.org)
 ```
 
 ```
-$ acmesmith authorize DOMAIN              # Get authz for DOMAIN.
-$ acmesmith request COMMON_NAME [SAN]     # request certificate for CN +COMMON_NAME+ with SANs +SAN+
+$ acmesmith order COMMON_NAME [SAN]     # request certificate for CN +COMMON_NAME+ with SANs +SAN+
 $ acmesmith add-san COMMON_NAME [SAN]     # re-request existing certificate of CN with additional SAN(s)
 ```
 
@@ -77,8 +71,8 @@ See `acmesmith help [subcommand]` for more help.
 See [config.sample.yml](./config.sample.yml) to start. Default configuration file is `./acmesmith.yml`.
 
 ``` yaml
-endpoint: https://acme-staging.api.letsencrypt.org/
-# endpoint: https://acme-v01.api.letsencrypt.org/ # productilon
+directory: https://acme-staging-v02.api.letsencrypt.org/
+# directory: https://acme-v02.api.letsencrypt.org/ # productilon
 
 storage:
   # configure where to store keys and certificates; described later
