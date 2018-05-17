@@ -22,11 +22,6 @@ module Acmesmith
       unless @config['endpoint']
         raise ArgumentError, "config['endpoint'] must be provided, e.g. https://acme-v01.api.letsencrypt.org/ or https://acme-staging.api.letsencrypt.org/"
       end
-
-      if @config['post_issueing_hooks']
-        warn '!! Deprecation warning: configuration "post_issueing_hooks" is now "post_issuing_hooks" (what a typo!). It will not work in the future release.'
-        @config['post_issuing_hooks'] = @config.delete('post_issueing_hooks')
-      end
     end
 
     def [](key)
