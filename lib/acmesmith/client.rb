@@ -194,26 +194,30 @@ module Acmesmith
     end
 
     def process_authorizations(authzs)
+      return if authzs.empty?
+
       targets = authzs.map do |authz|
         challenges = authz.challenges
         challenge = nil
         responder = config.challenge_responders.find do |x|
           challenge = challenges.find { |_| x.support?(_.challenge_type) }
         end
-        {domain: authz.domain, authz: authz, responder: responder, challenge: challenge}
+        {domain: authz.domain, authz: authz, responder: responder, responder_id: responder.__id__, challenge: challenge}
       end
-      return if targets.empty?
+      target_by_responders = targets.group_by{ |_| _.fetch(:responder_id) }.map { |_, ts| [ts[0].fetch(:responder), ts] }
 
       begin
-        targets.each do |target|
-          puts "=> Authorizing the identifier '#{target[:domain]}' with:"
+        target_by_responders.each do |responder, ts|
+          puts "=> Responsing to the challenges for the following identifier:"
           puts
-          puts " * Identifier: #{target[:domain]}"
-          puts " * Challenge:  #{target[:challenge].challenge_type}"
-          puts " * Responder:  #{target[:responder].class}"
+          puts " * Responder:   #{responder.class}"
+          puts " * Identifiers:"
+          ts.each do |target|
+            puts "     - #{target.fetch(:domain)} (#{target.fetch(:challenge).challenge_type})"
+          end
           puts
 
-          target[:responder].respond(target[:domain], target[:challenge])
+          responder.respond_all(*ts.map{ |t| [t.fetch(:domain), t.fetch(:challenge)] })
         end
 
         puts "=> Requesting validations..."
@@ -256,19 +260,22 @@ module Acmesmith
         end
         puts
 
-        puts "=> Authorized!"
-
-      ensure
-        targets.each do |target|
-          puts "=> Cleaning challenge for #{target[:domain]}"
+        target_by_responders.each do |responder, ts|
+          puts "=> Cleaning the responses the challenges for the following identifier:"
           puts
-          target[:responder].cleanup(target[:domain], target[:challenge])
+          puts " * Responder:   #{responder.class}"
+          puts " * Identifiers:"
+          ts.each do |target|
+            puts "     - #{target.fetch(:domain)} (#{target.fetch(:challenge).challenge_type})"
+          end
+          puts
+
+          responder.cleanup_all(*ts.map{ |t| [t.fetch(:domain), t.fetch(:challenge)] })
         end
-        puts
+
+        puts "=> Authorized!"
       end
     end
-
-
 
     def config
       @config
