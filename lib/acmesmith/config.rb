@@ -19,6 +19,10 @@ module Acmesmith
         raise ArgumentError, "config['storage'] must be provided"
       end
 
+      if @config['endpoint'] and !@config['directory']
+        raise ArgumentError, "config['directory'] must be provided, e.g. https://acme-v02.api.letsencrypt.org/directory or https://acme-staging-v02.api.letsencrypt.org/directory\n\nNOTE: We have dropped ACME v1 support since acmesmith v2.0.0. Specify v2 directory API URL using config['directory']."
+      end
+
       unless @config['directory']
         raise ArgumentError, "config['directory'] must be provided, e.g. https://acme-v02.api.letsencrypt.org/directory or https://acme-staging-v02.api.letsencrypt.org/directory"
       end
