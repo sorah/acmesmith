@@ -1,3 +1,9 @@
+## v2.0.2 (2018-05-18)
+
+### Bug fixes
+
+- `acm` post issuing hook could fail
+
 ## v2.0.1 (2018-05-18)
 
 ### Bug fixes

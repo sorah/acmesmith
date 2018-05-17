@@ -48,7 +48,7 @@ module Acmesmith
           {
             certificate: certificate.certificate.to_pem,
             private_key: certificate.private_key.to_pem,
-            certificate_chain: certificate.chain,
+            certificate_chain: certificate.issuer_pems,
           }.merge(certificate_arn ? {certificate_arn: certificate_arn} : {})
         )
         unless certificate_arn
