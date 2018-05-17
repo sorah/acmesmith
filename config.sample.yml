@@ -1,5 +1,6 @@
-endpoint: https://acme-staging.api.letsencrypt.org/
-# endpoint: https://acme-v01.api.letsencrypt.org/
+directory: https://acme-staging-v02.api.letsencrypt.org/directory
+# directory: https://acme-v02.api.letsencrypt.org/directory
+
 storage:
   type: s3
   region: 'ap-northeast-1'

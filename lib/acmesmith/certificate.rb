@@ -4,8 +4,13 @@ module Acmesmith
   class Certificate
     class PassphraseRequired < StandardError; end
 
-    def self.from_acme_client_certificate(c)
-      new c.x509, c.chain_to_pem, c.request.private_key, nil, c.request.csr
+    def self.split_pems(pems)
+      pems.each_line.slice_before(/^-----BEGIN CERTIFICATE-----$/).map(&:join)
+    end
+
+    def self.by_issuance(pem_chain, csr)
+      pems = split_pems(pem_chain)
+      new(*pems, csr.private_key, nil, csr)
     end
 
     def initialize(certificate, chain, private_key, key_passphrase = nil, csr = nil)
@@ -17,14 +22,27 @@ module Acmesmith
                      else
                         raise TypeError, 'certificate is expected to be a String or OpenSSL::X509::Certificate'
                      end
-      @chain = case chain
-               when String
-                 chain
-               when nil
-                 chain
-               else
-                 raise TypeError, 'chain is expected to be a String'
-               end
+      chain = case chain
+              when String
+                self.class.split_pems(chain)
+              when Array
+                chain
+              when nil
+                []
+              else
+                raise TypeError, 'chain is expected to be an Array<String or OpenSSL::X509::Certificate> or nil'
+              end
+
+      @chain = chain.map { |cert|
+        case cert
+        when OpenSSL::X509::Certificate
+          cert
+        when String
+          OpenSSL::X509::Certificate.new(cert)
+        else
+          raise TypeError, 'chain is expected to be an Array<String or OpenSSL::X509::Certificate> or nil'
+        end
+      }
 
       case private_key
       when String
@@ -71,7 +89,11 @@ module Acmesmith
     end
 
     def fullchain
-      "#{certificate.to_pem}\n#{chain}".gsub(/\n+/,?\n)
+      "#{certificate.to_pem}\n#{issuer_pems}".gsub(/\n+/,?\n)
+    end
+
+    def issuer_pems
+      chain.map(&:to_pem).join("\n")
     end
 
     def common_name
@@ -91,8 +113,9 @@ module Acmesmith
     def export(passphrase, cipher: OpenSSL::Cipher.new('aes-256-cbc'))
       {}.tap do |h|
         h[:certificate] = certificate.to_pem
-        h[:chain] = chain
+        h[:chain] = issuer_pems
         h[:fullchain] = fullchain
+
         h[:private_key] = if passphrase
           private_key.export(cipher, passphrase)
         else

@@ -19,13 +19,17 @@ module Acmesmith
         raise ArgumentError, "config['storage'] must be provided"
       end
 
-      unless @config['endpoint']
-        raise ArgumentError, "config['endpoint'] must be provided, e.g. https://acme-v01.api.letsencrypt.org/ or https://acme-staging.api.letsencrypt.org/"
+      unless @config['directory']
+        raise ArgumentError, "config['directory'] must be provided, e.g. https://acme-v02.api.letsencrypt.org/directory or https://acme-staging-v02.api.letsencrypt.org/directory"
       end
     end
 
     def [](key)
       @config[key]
+    end
+
+    def fetch(*args)
+      @config.fetch(*args)
     end
 
     def merge!(pair)

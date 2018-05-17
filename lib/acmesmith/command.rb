@@ -8,22 +8,36 @@ module Acmesmith
     class_option :config, default: './acmesmith.yml', aliases: %w(-c)
     class_option :passphrase_from_env,  type: :boolean, aliases: %w(-E), default: nil, desc: 'Read $ACMESMITH_ACCOUNT_KEY_PASSPHRASE and $ACMESMITH_CERTIFICATE_KEY_PASSPHRASE for passphrases'
 
-    desc "register CONTACT", "Create account key (contact e.g. mailto:xxx@example.org)"
-    def register(contact)
-      key = client.register(contact)
-      puts "Generated:\n#{key.private_key.public_key.to_pem}"
+    desc "new-account CONTACT", "Create account key (contact e.g. mailto:xxx@example.org)"
+    def new_account(contact)
+      puts "=> Creating an account ..."
+      key = client.new_account(contact)
+      puts "=> Public Key:"
+      puts "\n#{key.private_key.public_key.to_pem}"
     end
 
-    desc "authorize DOMAIN [DOMAIN ...]", "Get authz for DOMAIN."
+    desc "authorize DOMAIN [DOMAIN ...]", "(Implementation disabled for v2) Get authz for DOMAIN."
     def authorize(*domains)
-      client.authorize(*domains)
+      warn "! WARNING: 'acmesmith authorize' is not available"
+      warn "!"
+      warn "! TL;DR: Go ahead; Just run 'acmesmith order'."
+      warn "!"
+      warn "! Pre-authorization have not implemented yet in acme-client.gem (v2) library."
+      warn "! But, required domain authorizations will be performed automatically when ordering a certificate."
+      warn "!"
+      warn "! Pro Tips: Let's encrypt doesn't provide pre-authorization as of May 18, 2018."
+      warn "!"
+      # client.authorize(*domains)
     end
 
-    desc "request COMMON_NAME [SAN]", "request certificate for CN +COMMON_NAME+ with SANs +SAN+"
-    def request(common_name, *sans)
-      cert = client.request(common_name, *sans)
-      puts cert.certificate.to_text
-      puts cert.certificate.to_pem
+    desc "order COMMON_NAME [SAN]", "order certificate for CN +COMMON_NAME+ with SANs +SAN+"
+    method_option :show_certificate, type: :boolean, aliases: %w(-s), default: true, desc: 'show an issued certificate in PEM and text when exiting'
+    def order(common_name, *sans)
+      cert = client.order(common_name, *sans)
+      if options[:show_certificate]
+        puts cert.certificate.to_text
+        puts cert.certificate.to_pem
+      end
     end
 
     desc "post-issue-hooks COMMON_NAME", "Run all post-issuing hooks for common name. (for testing purpose)"
@@ -129,6 +143,29 @@ module Acmesmith
     desc "add-san COMMON_NAME [ADDITIONAL_SANS]", "request renewal of existing certificate with additional SANs"
     def add_san(common_name, *add_sans)
       client.add_san(common_name, *add_sans)
+    end
+
+    desc "register CONTACT", "(deprecated, use 'acmesmith new-account')"
+    def register(contact)
+      warn "!"
+      warn "! DEPRECATION WARNING: Use 'acmesmith new-account' command"
+      warn "! There is no user-facing breaking changes. It takes the same arguments with 'acmesmith register'."
+      warn "!"
+      warn "! This is due to change in semantics of ACME v2. ACME v2 defines 'new-account' instead of 'register' in v1."
+      warn "!"
+      new_account(contact)
+    end
+
+    desc "request COMMON_NAME [SAN]", "(deprecated, use 'acmesmith order')"
+    method_option :show_certificate, type: :boolean, aliases: %w(-s), default: true, desc: 'show an issued certificate in PEM and text when exiting'
+    def request(common_name, *sans)
+      warn "!"
+      warn "! DEPRECATION WARNING: Use 'acmesmith order' command"
+      warn "! There is no user-facing breaking changes. It takes the same arguments with 'acmesmith request'."
+      warn "!"
+      warn "! This is due to change in semantics of ACME v2. ACME v2 defines 'order' instead of 'request' in v1."
+      warn "!"
+      order(common_name, *sans)
     end
 
     private

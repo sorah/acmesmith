@@ -9,98 +9,55 @@ module Acmesmith
       @config ||= config
     end
 
-    def register(contact)
+    def new_account(contact, tos_agreed: true)
       key = AccountKey.generate
-      acme = AcmeClient.new(key, config['endpoint'])
-      registration = acme.register(contact)
-      registration.agree_terms
+      acme = Acme::Client.new(private_key: key.private_key, directory: config.fetch('directory'))
+      client = acme.new_account(contact: contact, terms_of_service_agreed: tos_agreed)
 
       storage.put_account_key(key, account_key_passphrase)
 
       key
     end
 
-    def authorize(*domains)
-      targets = domains.map do |domain|
-        authz = acme.authorize(domain)
-        challenges = [authz.http01, authz.dns01, authz.tls_sni01].compact
-        challenge = nil
-        responder = config.challenge_responders.find do |x|
-          challenge = challenges.find { |_| x.support?(_.class::CHALLENGE_TYPE) }
+    def order(*identifiers, not_before: nil, not_after: nil)
+      puts "=> Ordering a certificate for the following identifiers:"
+      puts
+      identifiers.each do |id|
+        puts " * #{id}"
+      end
+      puts
+      puts "=> Generating CSR"
+      csr = Acme::Client::CertificateRequest.new(subject: { common_name: identifiers.first }, names: identifiers[1..-1])
+      puts "=> Placing an order"
+      order = acme.new_order(identifiers: identifiers, not_before: not_before, not_after: not_after)
+
+      unless order.authorizations.empty? || order.status == 'ready'
+        puts "=> Looking for required domain authorizations"
+        puts
+        order.authorizations.map(&:domain).each do |domain|
+          puts " * #{domain}"
         end
-        {domain: domain, authz: authz, responder: responder, challenge: challenge}
+        puts
+
+        process_authorizations(order.authorizations)
       end
 
-      begin
-        targets.each do |target|
-          target[:responder].respond(target[:domain], target[:challenge])
-        end
+      cert = process_order_finalization(order, csr)
 
-        targets.each do |target|
-          puts "=> Requesting verifications..."
-          acme.request_verification(target[:challenge])
-        end
-          loop do
-            all_valid = true
-            targets.each do |target|
-              next if target[:valid]
-
-              status = acme.verify_status(target[:challenge])
-              puts " * [#{target[:domain]}] verify_status: #{status}"
-
-              if status == 'valid'
-                target[:valid] = true
-                next
-              end
-
-              all_valid = false
-              if status == "invalid"
-                err = target[:challenge].error
-                puts " ! [#{target[:domain]}] #{err["type"]}: #{err["detail"]}"
-              end
-            end
-            break if all_valid
-            sleep 3
-          end
-          puts "=> Done"
-      ensure
-        targets.each do |target|
-          target[:responder].cleanup(target[:domain], target[:challenge])
-        end
-      end
-    end
-
-    def request(common_name, *sans)
-      csr = Acme::Client::CertificateRequest.new(common_name: common_name, names: sans)
-      retried = false
-      acme_cert = begin
-        acme.new_certificate(csr)
-      rescue Acme::Client::Error::Unauthorized => e
-        raise unless config.auto_authorize_on_request
-        raise if retried
-
-        puts "=> Authorizing unauthorized domain names"
-        # https://github.com/letsencrypt/boulder/blob/b9369a481415b3fe31e010b34e2ff570b89e42aa/ra/ra.go#L604
-        m = e.message.match(/authorizations for these names not found or expired: ((?:[a-zA-Z0-9_.\-]+(?:,\s+|$))+)/)
-        if m && m[1]
-          domains = m[1].split(/,\s+/)
-        else
-          warn " ! Error message on certificate request was #{e.message.inspect} and acmesmith couldn't determine which domain names are unauthorized (maybe a bug)"
-          warn " ! Attempting to authorize all domains in this certificate reuqest for now."
-          domains = [common_name, *sans]
-        end
-        puts " * #{domains.join(', ')}"
-        authorize(*domains)
-        retried = true
-        retry
-      end
-
-      cert = Certificate.from_acme_client_certificate(acme_cert)
+      puts "=> Certificate issued"
+      puts
+      print " * securing into the storage ..."
       storage.put_certificate(cert, certificate_key_passphrase)
+      puts " [ ok ]"
+      puts
 
       execute_post_issue_hooks(cert)
 
       cert
+    end
+
+    def authorize(*identifiers)
+      raise NotImplementedError, "Domain authorization in advance is still not available in acme-client (v2). Required authorizations will be performed when ordering certificates"
     end
 
     def post_issue_hooks(common_name)
@@ -110,9 +67,12 @@ module Acmesmith
 
     def execute_post_issue_hooks(certificate)
       hooks = config.post_issuing_hooks(certificate.common_name)
+      return if hooks.empty?
+      puts "=> Executing post issuing hooks for CN=#{certificate.common_name}"
       hooks.each do |hook|
         hook.run(certificate: certificate)
       end
+      puts
     end
 
     def certificate_versions(common_name)
@@ -201,7 +161,7 @@ module Acmesmith
         puts "   Not valid after: #{not_after}"
         next unless (cert.certificate.not_after.utc - Time.now.utc) < (days.to_i * 86400)
         puts " * Renewing: CN=#{cert.common_name}, SANs=#{cert.sans.join(',')}"
-        request(cert.common_name, *cert.sans)
+        order(cert.common_name, *cert.sans)
       end
     end
 
@@ -210,10 +170,105 @@ module Acmesmith
       cert = storage.get_certificate(common_name)
       sans = cert.sans + add_sans
       puts " * SANs will be: #{sans.join(?,)}"
-      request(cert.common_name, *sans)
+      order(cert.common_name, *sans)
     end
 
     private
+
+    def process_order_finalization(order, csr)
+      puts "=> Finalizing the order"
+      puts
+
+      print " * Requesting..."
+      order.finalize(csr: csr)
+      puts" [ ok ]"
+
+      while %w(ready processing).include?(order.status)
+        order.reload()
+        puts " * Waiting for procession: status=#{order.status}"
+        sleep 2
+      end
+      puts
+
+      Certificate.by_issuance(order.certificate, csr)
+    end
+
+    def process_authorizations(authzs)
+      targets = authzs.map do |authz|
+        challenges = authz.challenges
+        challenge = nil
+        responder = config.challenge_responders.find do |x|
+          challenge = challenges.find { |_| x.support?(_.challenge_type) }
+        end
+        {domain: authz.domain, authz: authz, responder: responder, challenge: challenge}
+      end
+      return if targets.empty?
+
+      begin
+        targets.each do |target|
+          puts "=> Authorizing the identifier '#{target[:domain]}' with:"
+          puts
+          puts " * Identifier: #{target[:domain]}"
+          puts " * Challenge:  #{target[:challenge].challenge_type}"
+          puts " * Responder:  #{target[:responder].class}"
+          puts
+
+          target[:responder].respond(target[:domain], target[:challenge])
+        end
+
+        puts "=> Requesting validations..."
+        puts
+        targets.each do |target|
+          print " * #{target[:domain]} (#{target[:challenge].challenge_type}) ..."
+          target[:challenge].request_validation()
+          puts " [ ok ]"
+        end
+        puts
+
+        puts "=> Waiting for the validation..."
+        puts
+
+        loop do
+          all_valid = true
+          any_error = false
+          targets.each do |target|
+            next if target[:valid]
+
+            target[:challenge].reload
+            status = target[:challenge].status
+
+            puts " * [#{target[:domain]}] status: #{status}"
+
+            if status == 'valid'
+              target[:valid] = true
+              next
+            end
+
+            all_valid = false
+            if status == 'invalid'
+              any_error = true
+              err = target[:challenge].error
+              puts " ! [#{target[:domain]}] error: #{err.inspect}"
+            end
+          end
+          break if all_valid || any_error
+          sleep 3
+        end
+        puts
+
+        puts "=> Authorized!"
+
+      ensure
+        targets.each do |target|
+          puts "=> Cleaning challenge for #{target[:domain]}"
+          puts
+          target[:responder].cleanup(target[:domain], target[:challenge])
+        end
+        puts
+      end
+    end
+
+
 
     def config
       @config
@@ -230,7 +285,7 @@ module Acmesmith
     end
 
     def acme
-      @acme ||= AcmeClient.new(account_key, config['endpoint'])
+      @acme ||= Acme::Client.new(private_key: account_key.private_key, directory: config.fetch('directory'))
     end
 
     def certificate_key_passphrase
