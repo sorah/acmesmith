@@ -200,7 +200,11 @@ module Acmesmith
         challenges = authz.challenges
         challenge = nil
         responder = config.challenge_responders.find do |x|
-          challenge = challenges.find { |_| x.support?(_.challenge_type) }
+          challenge = challenges.find { |c|
+            # OMG, acme-client might return a Hash instead of Acme::Client::Resources::Challenge::* object...
+            challenge_type = c.is_a?(Hash) ? c[:challenge_type] : c.challenge_type
+            x.support?(challenge_type)
+          }
         end
         {domain: authz.domain, authz: authz, responder: responder, responder_id: responder.__id__, challenge: challenge}
       end

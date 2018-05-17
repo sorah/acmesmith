@@ -1,3 +1,9 @@
+## v2.0.1 (2018-05-18)
+
+### Bug fixes
+
+- It could fail when encountered a challenge type which is unsupported by `acme-client` gem
+
 ## v2.0.0 (2018-05-18)
 
 ### Notable changes
