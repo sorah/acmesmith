@@ -1,7 +1,7 @@
 require 'acmesmith/account_key'
-require 'acmesmith/acme_client'
 require 'acmesmith/certificate'
 require 'acmesmith/save_certificate_service'
+require 'acme-client'
 
 module Acmesmith
   class Client
