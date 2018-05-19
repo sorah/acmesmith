@@ -55,7 +55,9 @@ module Acmesmith
           puts " * #{zone_id}:"
           change_batch.fetch(:changes).each do |b|
             rrset = b.fetch(:resource_record_set)
-            puts "   - #{b.fetch(:action)}: #{rrset.fetch(:name)} #{rrset.fetch(:ttl)} #{rrset.fetch(:type)} #{rrset.dig(:resource_records, 0, :value)}"
+            rrset.fetch(:resource_records).each do |rr|
+              puts "   - #{b.fetch(:action)}: #{rrset.fetch(:name)} #{rrset.fetch(:ttl)} #{rrset.fetch(:type)} #{rr.fetch(:value)}"
+            end
           end
           print "   ... "
 
@@ -98,14 +100,29 @@ module Acmesmith
       end
 
       def change_batch_for_challenges(domain_and_challenges, comment: nil, action: 'UPSERT')
-        {
-          comment: "ACME challenge response #{comment}",
-          changes: domain_and_challenges.map do |d,c|
+        changes = domain_and_challenges
+          .map do |d, c|
+            rrset_for_challenge(d, c)
+          end
+          .group_by do |_|
+            # Reduce changes by name. ACME server may require multiple challenge responses for the same identifier
+            _.fetch(:name) 
+          end
+          .map do |name, cs| 
+            cs.inject { |result, change|
+              result.merge(resource_records: result.fetch(:resource_records, []) + change.fetch(:resource_records))
+            }
+          end
+          .map do |change|
             {
               action: action,
-              resource_record_set: rrset_for_challenge(d,c),
+              resource_record_set: change,
             }
-          end,
+          end
+
+        {
+          comment: "ACME challenge response #{comment}",
+          changes: changes,
         }
       end
 
