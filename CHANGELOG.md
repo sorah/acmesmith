@@ -1,3 +1,11 @@
+## v2.0.3 (2018-05-19)
+
+### Bug fixes
+
+- `route53` couldn't create an appropriate RRSet when ACME server needs multiple authorizations for the single domain.  [#31](https://github.com/sorah/acmesmith/issues/31)
+
+  (In fact, responsing could fail when ordering certificate for `*.example.org` and `example.org` to LE.)
+
 ## v2.0.2 (2018-05-18)
 
 ### Bug fixes
