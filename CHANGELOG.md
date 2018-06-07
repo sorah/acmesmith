@@ -1,3 +1,9 @@
+## v2.1.0 (2018-06-07)
+
+### Changes
+
+- route53: Private hosted zones are now ignored by default. If you really need to use such zones, specify explicitly with `hosted_zone_map`.
+
 ## v2.0.3 (2018-05-19)
 
 ### Bug fixes
