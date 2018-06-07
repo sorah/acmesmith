@@ -164,7 +164,9 @@ module Acmesmith
       def hosted_zone_list
         @hosted_zone_list ||= begin
           @route53.list_hosted_zones.each.flat_map do |page|
-            page.hosted_zones.map {  |zone| [zone.name, zone.id] }
+            page.hosted_zones
+              .reject { |zone| zone.config.private_zone }
+              .map {  |zone| [zone.name, zone.id] }
           end.group_by(&:first).map { |domain, kvs| [domain, kvs.map(&:last)] }.to_h.merge(hosted_zone_map)
         end
       end
