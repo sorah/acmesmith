@@ -71,8 +71,8 @@ See `acmesmith help [subcommand]` for more help.
 See [config.sample.yml](./config.sample.yml) to start. Default configuration file is `./acmesmith.yml`.
 
 ``` yaml
-directory: https://acme-staging-v02.api.letsencrypt.org/
-# directory: https://acme-v02.api.letsencrypt.org/ # productilon
+directory: https://acme-staging-v02.api.letsencrypt.org/directory
+# directory: https://acme-v02.api.letsencrypt.org/directory # production
 
 storage:
   # configure where to store keys and certificates; described later
