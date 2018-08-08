@@ -1,3 +1,9 @@
+## v2.2.0 (2018-08-08)
+
+### Enhancement
+
+- s3: Added `pkcs12_passphrase` and `pkcs12_commonname` options for saving PKCS#12 file into a S3 bucket. This is for scripts which read S3 bucket directly and needs PKCS#12 file.
+
 ## v2.1.0 (2018-06-07)
 
 ### Changes
