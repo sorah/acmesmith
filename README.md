@@ -101,6 +101,8 @@ storage:
   # kms_key_id: # KMS key id (optional); if omit, default AWS managed key for S3 will be used
   # kms_key_id_account: # KMS key id for account key (optional); This overrides kms_key_id
   # kms_key_id_certificate_key: # KMS key id for private keys for certificates (optional); This oveerides kms_key_id
+  # pkcs12_passphrase: # (optional) Set passphrase to generate PKCS#12 file (for scripts that reads S3 bucket directly)
+  # pkcs12_common_names: ['example.org'] # (optional) List of common names to limit certificates for generating PKCS#12 file.
 ```
 
 This saves certificates and keys in the following S3 keys:

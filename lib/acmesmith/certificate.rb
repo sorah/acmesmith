@@ -110,6 +110,10 @@ module Acmesmith
       "#{certificate.not_before.utc.strftime('%Y%m%d-%H%M%S')}_#{certificate.serial.to_i.to_s(16)}"
     end
 
+    def pkcs12(passphrase)
+      OpenSSL::PKCS12.create(passphrase, common_name, private_key, certificate)
+    end
+
     def export(passphrase, cipher: OpenSSL::Cipher.new('aes-256-cbc'))
       {}.tap do |h|
         h[:certificate] = certificate.to_pem

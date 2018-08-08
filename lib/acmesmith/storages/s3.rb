@@ -7,13 +7,16 @@ require 'acmesmith/certificate'
 module Acmesmith
   module Storages
     class S3 < Base
-      def initialize(aws_access_key: nil, bucket:, prefix: nil, region:, use_kms: true, kms_key_id: nil, kms_key_id_account: nil, kms_key_id_certificate_key: nil)
+      def initialize(aws_access_key: nil, bucket:, prefix: nil, region:, use_kms: true, kms_key_id: nil, kms_key_id_account: nil, kms_key_id_certificate_key: nil, pkcs12_passphrase: nil, pkcs12_common_names: nil)
         @region = region
         @bucket = bucket
         @prefix = prefix
         if @prefix && !@prefix.end_with?('/')
           @prefix += '/'
         end
+
+        @pkcs12_passphrase = pkcs12_passphrase
+        @pkcs12_common_names = pkcs12_common_names
 
         @use_kms = use_kms
         @kms_key_id = kms_key_id
@@ -64,12 +67,12 @@ module Acmesmith
       def put_certificate(cert, passphrase = nil, update_current: true)
         h = cert.export(passphrase)
 
-        put = -> (key, body, kms) do
+        put = -> (key, body, kms, content_type = 'application/x-pem-file') do
           params = {
             bucket: bucket,
             key: key,
             body: body,
-            content_type: 'application/x-pem-file',
+            content_type: content_type,
           }
           if kms
             params[:server_side_encryption] = 'aws:kms'
@@ -83,6 +86,10 @@ module Acmesmith
         put.call chain_key(cert.common_name, cert.version), "#{h[:chain].rstrip}\n", false
         put.call fullchain_key(cert.common_name, cert.version), "#{h[:fullchain].rstrip}\n", false
         put.call private_key_key(cert.common_name, cert.version), "#{h[:private_key].rstrip}\n", true
+
+        if generate_pkcs12?(cert)
+          put.call pkcs12_key(cert.common_name, cert.version), "#{cert.pkcs12(@pkcs12_passphrase).to_der}\n", true, 'application/x-pkcs12'
+        end
 
         if update_current
           @s3.put_object(
@@ -170,6 +177,16 @@ module Acmesmith
 
       def fullchain_key(cn, ver)
         "#{certificate_base_key(cn, ver)}/fullchain.pem"
+      end
+
+      def pkcs12_key(cn, ver)
+        "#{certificate_base_key(cn, ver)}/cert.p12"
+      end
+
+      def generate_pkcs12?(cert)
+        if @pkcs12_passphrase
+          @pkcs12_common_names.nil? || @pkcs12_common_names.include?(cert.common_name)
+        end
       end
     end
   end

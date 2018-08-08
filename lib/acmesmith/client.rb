@@ -12,7 +12,7 @@ module Acmesmith
     def new_account(contact, tos_agreed: true)
       key = AccountKey.generate
       acme = Acme::Client.new(private_key: key.private_key, directory: config.fetch('directory'))
-      client = acme.new_account(contact: contact, terms_of_service_agreed: tos_agreed)
+      acme.new_account(contact: contact, terms_of_service_agreed: tos_agreed)
 
       storage.put_account_key(key, account_key_passphrase)
 
@@ -139,7 +139,7 @@ module Acmesmith
       cert = storage.get_certificate(common_name, version: version)
       cert.key_passphrase = certificate_key_passphrase if certificate_key_passphrase
       
-      p12 = OpenSSL::PKCS12.create(passphrase, cert.common_name, cert.private_key, cert.certificate)
+      p12 = cert.pkcs12(passphrase)
       File.open(output, 'w', mode.to_i(8)) do |f|
         f.puts p12.to_der
       end
