@@ -74,7 +74,7 @@ module Acmesmith
             body: body,
             content_type: content_type,
           }
-          if kms
+          if use_kms
             params[:server_side_encryption] = 'aws:kms'
             key_id = kms_key_id_certificate_key || kms_key_id
             params[:ssekms_key_id] = key_id if key_id
