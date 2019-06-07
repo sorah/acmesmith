@@ -10,7 +10,7 @@ module Acmesmith
 
     def self.by_issuance(pem_chain, csr)
       pems = split_pems(pem_chain)
-      new(*pems, csr.private_key, nil, csr)
+      new(pems[0], pems[1..-1], csr.private_key, nil, csr)
     end
 
     def initialize(certificate, chain, private_key, key_passphrase = nil, csr = nil)
@@ -48,7 +48,7 @@ module Acmesmith
       when String
         @raw_private_key = private_key
         if key_passphrase
-          self.key_passphrase = key_passphrase 
+          self.key_passphrase = key_passphrase
         else
           begin
             @private_key = OpenSSL::PKey::RSA.new(@raw_private_key) { nil }
@@ -111,7 +111,7 @@ module Acmesmith
     end
 
     def pkcs12(passphrase)
-      OpenSSL::PKCS12.create(passphrase, common_name, private_key, certificate)
+      OpenSSL::PKCS12.create(passphrase, common_name, private_key, certificate, chain)
     end
 
     def export(passphrase, cipher: OpenSSL::Cipher.new('aes-256-cbc'))
