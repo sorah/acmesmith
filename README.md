@@ -141,6 +141,14 @@ challenge_responders:
       #   session_token:
       # hosted_zone_map: # hosted zone map (optional); This is to specify exactly one hosted zone to use. This will be required when there are multiple hosted zone with same domain name. Usually
       #   "example.org.": "/hostedzone/DEADBEEF"
+      #   Alternative format: Add support for role_arn. Useful when having zones in multiple accounts.
+      #   "both.example.com.": 
+      #       zone_id: "/hostedzone/8BADFOOD"
+      #       role_arn: "arn:aws:iam::123451234512:role/switched_role"
+      #   "zone_id_only.example.com.": 
+      #       zone_id: "/hostedzone/8BADFOOD"
+      #   "role_arn_only.example.com.": 
+      #       role_arn: "arn:aws:iam::123451234512:role/switched_role"
 ```
 
 ### Post Issuing Hooks
