@@ -7,6 +7,7 @@ module Acmesmith
     class Route53 < Base
       class HostedZoneNotFound < StandardError; end
       class AmbiguousHostedZones < StandardError; end
+      attr_reader :master_domain, :challenge_domain
 
       def support?(type)
         # Acme::Client::Resources::Challenges::DNS01
@@ -17,12 +18,14 @@ module Acmesmith
         true
       end
 
-      def initialize(aws_access_key: nil, hosted_zone_map: {})
+      def initialize(aws_access_key: nil, hosted_zone_map: {}, master_domain: nil, challenge_domain: nil)
         @route53 = Aws::Route53::Client.new({region: 'us-east-1'}.tap do |opt| 
           opt[:credentials] = Aws::Credentials.new(aws_access_key['access_key_id'], aws_access_key['secret_access_key'], aws_access_key['session_token']) if aws_access_key
         end)
         @hosted_zone_map = hosted_zone_map
         @hosted_zone_cache = {}
+        @master_domain = master_domain
+        @challenge_domain = challenge_domain
       end
 
       def respond_all(*domain_and_challenges)
@@ -56,7 +59,14 @@ module Acmesmith
           change_batch.fetch(:changes).each do |b|
             rrset = b.fetch(:resource_record_set)
             rrset.fetch(:resource_records).each do |rr|
-              puts "   - #{b.fetch(:action)}: #{rrset.fetch(:name)} #{rrset.fetch(:ttl)} #{rrset.fetch(:type)} #{rr.fetch(:value)}"
+              if rrset.fetch(:name).split(".").last(2).join(".") == master_domain then
+                print "=>  Instead of original RRSet, request special challenge domain's RRSet"
+                rrset_cname = rrset.fetch(:name).split("drev.jp").first + challenge_domain
+                rrset.update({name: rrset_cname})
+                puts "   - #{b.fetch(:action)}: #{rrset.fetch(:name)} #{rrset.fetch(:ttl)} #{rrset.fetch(:type)} #{rr.fetch(:value)}"
+              else
+                puts "   - #{b.fetch(:action)}: #{rrset.fetch(:name)} #{rrset.fetch(:ttl)} #{rrset.fetch(:type)} #{rr.fetch(:value)}"
+              end
             end
           end
           print "   ... "
@@ -75,6 +85,13 @@ module Acmesmith
         change_ids
       end
 
+      def master_domain
+        @master_domain.to_s
+      end
+
+      def challenge_domain
+        @challenge_domain.to_s
+      end
 
       def wait_for_sync(change_ids)
         puts "=> Waiting for change to be in sync"

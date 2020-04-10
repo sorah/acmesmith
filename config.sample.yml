@@ -15,5 +15,8 @@ storage:
 challenge_responders:
   - route53: {}
 
+      master_domain: example.jp
+      challenge_domain: challenge.example.jp
+
 account_key_passphrase: password
 certificate_key_passphrase: secret

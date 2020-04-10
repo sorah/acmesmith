@@ -78,6 +78,24 @@ storage:
   # configure where to store keys and certificates; described later
 challenge_responders:
   # configure how to respond ACME challenges; described later
+  - route53: {}
+
+  # configure your customize challenge domain(AWS route53) here
+
+  # if you have severals AWS account, all used route53 to manage your hosted zone
+  # such as a administrator account(for contains main domain's hosted zone, like example.com)
+  # and servals developer account(for contains sub domain's hosted zone, like develop.example.com)
+  # make sure you delegate sub domain to main domain
+  # then you can set a original domain's CNAME previously to finish the challenge
+  # like below
+  ##
+  ## In sub domain(develop.example.com)'s hosted zone
+  ##  _acme-challenge.example.com  CNAME  5  _acme-challenge.test.challenge.example.com
+  ##
+  # Now you can separate administrator account and developer account's users for security purpose
+  # Although, the challenge respond will finished as usual
+      master_domain: example.com
+      challenge_domain: challenge.example.com
 
 account_key_passphrase: password
 certificate_key_passphrase: secret
