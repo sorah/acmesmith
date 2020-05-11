@@ -1,0 +1,6 @@
+.git/
+pkg/
+.bundle/
+vendor/
+acmesmith.yml
+config*yml

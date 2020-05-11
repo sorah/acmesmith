@@ -31,6 +31,13 @@ Or install it yourself as:
 
     $ gem install acmesmith
 
+### Docker
+
+[`Dockerfile`](./Dockerfile) is available. Default confguration file is at `/app/acmesmith.yml`.
+
+Pre-built docker images are provided at https://hub.docker.com/r/sorah/acmesmith for your convenience
+Built with GitHub Actions & [sorah-rbpkg/dockerfiles](https://github.com/sorah-rbpkg/dockerfiles).
+
 ## Usage
 
 ```
