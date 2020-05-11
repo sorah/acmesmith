@@ -6,7 +6,7 @@ require 'acmesmith/version'
 Gem::Specification.new do |spec|
   spec.name          = "acmesmith"
   spec.version       = Acmesmith::VERSION
-  spec.authors       = ["sorah (Shota Fukumori)"]
+  spec.authors       = ["Sorah Fukumori"]
   spec.email         = ["her@sorah.jp"]
 
   spec.summary       = %q{ACME client (Let's encrypt client) to manage certificate in multi server environment with cloud services (e.g. AWS)}
