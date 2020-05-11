@@ -199,13 +199,22 @@ module Acmesmith
       targets = authzs.map do |authz|
         challenges = authz.challenges
         challenge = nil
-        responder = config.challenge_responders.find do |x|
-          challenge = challenges.find { |c|
+
+        responder_rule = config.challenge_responders.select do |rule|
+          rule.filter.applicable?(authz.domain)
+        end.find do |rule|
+          challenge = challenges.find do |c|
             # OMG, acme-client might return a Hash instead of Acme::Client::Resources::Challenge::* object...
-            challenge_type = c.is_a?(Hash) ? c[:challenge_type] : c.challenge_type
-            x.support?(challenge_type)
-          }
+            rule.responder.support?(c.is_a?(Hash) ? c[:challenge_type] : c.challenge_type)
+          end
         end
+
+        unless responder_rule
+          raise "Cannot find a challenge responder for domain #{authz.domain.inspect}"
+        end
+
+        responder = responder_rule.responder
+
         {domain: authz.domain, authz: authz, responder: responder, responder_id: responder.__id__, challenge: challenge}
       end
       target_by_responders = targets.group_by{ |_| _.fetch(:responder_id) }.map { |_, ts| [ts[0].fetch(:responder), ts] }

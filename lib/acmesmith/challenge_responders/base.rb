@@ -6,6 +6,11 @@ module Acmesmith
         raise NotImplementedError
       end
 
+      # Return 'true' when supports given domain name
+      def applicable?(domain)
+        true
+      end
+
       # Return 'true' if implements respond_all method.
       def cap_respond_all?
         false

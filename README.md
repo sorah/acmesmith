@@ -128,6 +128,27 @@ storage:
 
 Challenge responders responds to ACME challenges to prove domain ownership to CA.
 
+```yaml
+challenge_responders:
+  ## Multiple responders are accepted.
+  ## The first responder that supports a challenge and applicable for given domain name will be used.
+  - {RESPONDER_TYPE}:
+      {RESPONDER_OPTIONS}
+
+    ### Filter (optional)
+    filter:
+      domain_name_exact:
+        - my-app.example.com
+      domain_name_suffix:
+        - .example.org
+      domain_name_regexp:
+        - '\Aapp\d+.example.org\z'
+
+
+  - {RESPONDER_TYPE}:
+      {RESPONDER_OPTIONS}
+```
+
 #### Route53
 
 Route53 responder supports `dns-01` challenge type. This assumes domain NS are managed under Route53 hosted zone.
