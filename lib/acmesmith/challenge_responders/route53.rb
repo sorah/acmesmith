@@ -17,10 +17,21 @@ module Acmesmith
         true
       end
 
-      def initialize(aws_access_key: nil, hosted_zone_map: {})
-        @route53 = Aws::Route53::Client.new({region: 'us-east-1'}.tap do |opt| 
+      def initialize(aws_access_key: nil, assume_role: nil, hosted_zone_map: {})
+        aws_options = {region: 'us-east-1'}.tap do |opt| 
           opt[:credentials] = Aws::Credentials.new(aws_access_key['access_key_id'], aws_access_key['secret_access_key'], aws_access_key['session_token']) if aws_access_key
+        end
+
+        @route53 = Aws::Route53::Client.new(aws_options.dup.tap do |opt|
+          case
+          when assume_role
+            opt[:credentials] = Aws::AssumeRoleCredentials.new(
+              client: Aws::STS::Client.new(aws_options),
+              **({role_session_name: "acmesmith-#{$$}"}.merge(assume_role.map{ |k,v| [k.to_sym,v] }.to_h)),
+            )
+          end
         end)
+
         @hosted_zone_map = hosted_zone_map
         @hosted_zone_cache = {}
       end
@@ -47,6 +58,9 @@ module Acmesmith
       end
 
       private
+
+      def static_credentials
+      end
 
       def request_changing_rrset(zone_and_batches, comment: nil)
         puts "=> Requesting RRSet change #{comment}"

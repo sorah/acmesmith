@@ -11,6 +11,11 @@ challenge_responders:
         secret_access_key:
         # session_token:
 
+      ### Assume IAM role to access Route 53
+      # Available options are https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/AssumeRoleCredentials.html
+      assume_role:
+        role_arn: "arn:aws:iam:::..."
+
       ### Hosted zone map (optional)
       ##  This specifies an exact hosted zone ID for each domain name.
       ##  Required when you have multiple hosted zones for the same domain name.
