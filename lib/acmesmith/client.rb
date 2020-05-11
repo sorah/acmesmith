@@ -1,6 +1,7 @@
 require 'acmesmith/account_key'
 require 'acmesmith/certificate'
 require 'acmesmith/authorization_service'
+require 'acmesmith/ordering_service'
 require 'acmesmith/save_certificate_service'
 require 'acme-client'
 
@@ -21,33 +22,16 @@ module Acmesmith
     end
 
     def order(*identifiers, not_before: nil, not_after: nil)
-      puts "=> Ordering a certificate for the following identifiers:"
-      puts
-      identifiers.each do |id|
-        puts " * #{id}"
-      end
-      puts
+      order = OrderingService.new(
+        acme: acme,
+        identifiers: identifiers,
+        challenge_responder_rules: config.challenge_responders,
+        not_before: not_before,
+        not_after: not_after
+      )
+      order.perform!
+      cert = order.certificate
 
-      puts "=> Generating CSR"
-      csr = Acme::Client::CertificateRequest.new(subject: { common_name: identifiers.first }, names: identifiers[1..-1])
-
-      puts "=> Placing an order"
-      order = acme.new_order(identifiers: identifiers, not_before: not_before, not_after: not_after)
-
-      unless order.authorizations.empty? || order.status == 'ready'
-        puts "=> Looking for required domain authorizations"
-        puts
-        order.authorizations.map(&:domain).each do |domain|
-          puts " * #{domain}"
-        end
-        puts
-
-        AuthorizationService.new(config.challenge_responders, order.authorizations).perform!
-      end
-
-      cert = process_order_finalization(order, csr)
-
-      puts "=> Certificate issued"
       puts
       print " * securing into the storage ..."
       storage.put_certificate(cert, certificate_key_passphrase)
@@ -178,23 +162,6 @@ module Acmesmith
 
     private
 
-    def process_order_finalization(order, csr)
-      puts "=> Finalizing the order"
-      puts
-
-      print " * Requesting..."
-      order.finalize(csr: csr)
-      puts" [ ok ]"
-
-      while %w(ready processing).include?(order.status)
-        order.reload()
-        puts " * Waiting for procession: status=#{order.status}"
-        sleep 2
-      end
-      puts
-
-      Certificate.by_issuance(order.certificate, csr)
-    end
 
     def config
       @config
