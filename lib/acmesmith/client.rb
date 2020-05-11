@@ -1,5 +1,6 @@
 require 'acmesmith/account_key'
 require 'acmesmith/certificate'
+require 'acmesmith/authorization_service'
 require 'acmesmith/save_certificate_service'
 require 'acme-client'
 
@@ -26,8 +27,10 @@ module Acmesmith
         puts " * #{id}"
       end
       puts
+
       puts "=> Generating CSR"
       csr = Acme::Client::CertificateRequest.new(subject: { common_name: identifiers.first }, names: identifiers[1..-1])
+
       puts "=> Placing an order"
       order = acme.new_order(identifiers: identifiers, not_before: not_before, not_after: not_after)
 
@@ -39,7 +42,7 @@ module Acmesmith
         end
         puts
 
-        process_authorizations(order.authorizations)
+        AuthorizationService.new(config.challenge_responders, order.authorizations).perform!
       end
 
       cert = process_order_finalization(order, csr)
@@ -191,116 +194,6 @@ module Acmesmith
       puts
 
       Certificate.by_issuance(order.certificate, csr)
-    end
-
-    def process_authorizations(authzs)
-      return if authzs.empty?
-
-      targets = authzs.map do |authz|
-        challenges = authz.challenges
-        challenge = nil
-
-        responder_rule = config.challenge_responders.select do |rule|
-          rule.filter.applicable?(authz.domain)
-        end.find do |rule|
-          challenge = challenges.find do |c|
-            # OMG, acme-client might return a Hash instead of Acme::Client::Resources::Challenge::* object...
-            rule.responder.support?(c.is_a?(Hash) ? c[:challenge_type] : c.challenge_type)
-          end
-        end
-
-        unless responder_rule
-          raise "Cannot find a challenge responder for domain #{authz.domain.inspect}"
-        end
-
-        responder = responder_rule.responder
-
-        {domain: authz.domain, authz: authz, responder: responder, responder_id: responder.__id__, challenge: challenge}
-      end
-      target_by_responders = targets.group_by{ |_| _.fetch(:responder_id) }.map { |_, ts| [ts[0].fetch(:responder), ts] }
-
-      begin
-        target_by_responders.each do |responder, ts|
-          puts "=> Responsing to the challenges for the following identifier:"
-          puts
-          puts " * Responder:   #{responder.class}"
-          puts " * Identifiers:"
-          ts.each do |target|
-            puts "     - #{target.fetch(:domain)} (#{target.fetch(:challenge).challenge_type})"
-          end
-          puts
-
-          responder.respond_all(*ts.map{ |t| [t.fetch(:domain), t.fetch(:challenge)] })
-        end
-
-        puts "=> Requesting validations..."
-        puts
-        targets.each do |target|
-          print " * #{target[:domain]} (#{target[:challenge].challenge_type}) ..."
-          target[:challenge].request_validation()
-          puts " [ ok ]"
-        end
-        puts
-
-        puts "=> Waiting for the validation..."
-        puts
-
-        any_error = false
-        loop do
-          all_valid = true
-          targets.each do |target|
-            next if target[:valid]
-
-            target[:challenge].reload
-            status = target[:challenge].status
-
-            puts " * [#{target[:domain]}] status: #{status}"
-
-            if status == 'valid'
-              target[:valid] = true
-              next
-            end
-
-            all_valid = false
-            if status == 'invalid'
-              any_error = true
-              err = target[:challenge].error
-              puts " ! [#{target[:domain]}] error: #{err.inspect}"
-            end
-          end
-          break if all_valid || any_error
-          sleep 3
-        end
-        puts
-
-        target_by_responders.each do |responder, ts|
-          puts "=> Cleaning the responses the challenges for the following identifier:"
-          puts
-          puts " * Responder:   #{responder.class}"
-          puts " * Identifiers:"
-          ts.each do |target|
-            puts "     - #{target.fetch(:domain)} (#{target.fetch(:challenge).challenge_type})"
-          end
-          puts
-
-          responder.cleanup_all(*ts.map{ |t| [t.fetch(:domain), t.fetch(:challenge)] })
-        end
-
-        if any_error
-          targets.each do |target|
-            $stderr.puts ""
-            $stderr.puts "!! Some identitiers failed to challenge"
-            $stderr.puts ""
-            targets.select { |_| _[:challenge].status != 'valid' }.each do |target|
-              $stderr.puts "   - #{target[:domain]}: #{target[:challenge].error.inspect}"
-            end
-            $stderr.puts ""
-          end
-          raise "Some identifiers failed to challenge: #{targets.select { |_| _[:challenge].status != 'valid' }.map{ |_| _[:domain] }.inspect}"
-        end
-
-        puts "=> Authorized!"
-      end
     end
 
     def config
