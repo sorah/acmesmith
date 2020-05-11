@@ -76,6 +76,7 @@ directory: https://acme-staging-v02.api.letsencrypt.org/directory
 
 storage:
   # configure where to store keys and certificates; described later
+
 challenge_responders:
   # configure how to respond ACME challenges; described later
 
@@ -85,48 +86,25 @@ certificate_key_passphrase: secret
 
 ### Storage
 
-#### S3
+Storage provider stores issued certificates, private keys and ACME account keys.
 
-```
-storage:
-  type: s3
-  region:
-  bucket:
-  # prefix:
-  # aws_access_key: # aws credentials (optional); If omit, default configuration of aws-sdk use will be used.
-  #   access_key_id:
-  #   secret_access_key:
-  #   session_token:
-  # use_kms: true
-  # kms_key_id: # KMS key id (optional); if omit, default AWS managed key for S3 will be used
-  # kms_key_id_account: # KMS key id for account key (optional); This overrides kms_key_id
-  # kms_key_id_certificate_key: # KMS key id for private keys for certificates (optional); This oveerides kms_key_id
-  # pkcs12_passphrase: # (optional) Set passphrase to generate PKCS#12 file (for scripts that reads S3 bucket directly)
-  # pkcs12_common_names: ['example.org'] # (optional) List of common names to limit certificates for generating PKCS#12 file.
-```
-
-This saves certificates and keys in the following S3 keys:
-
-- `{prefix}/account.pem`: Account private key in pem
-- `{prefix}/certs/{common_name}/current`: text file contains current version name
-- `{prefix}/certs/{common_name}/{version}/cert.pem`: certificate in pem
-- `{prefix}/certs/{common_name}/{version}/key.pem`: private key in pem
-- `{prefix}/certs/{common_name}/{version}/chain.pem`: CA chain in pem
-- `{prefix}/certs/{common_name}/{version}/fullchain.pem`: certificate + CA chain in pem. This is suitable for some server softwares like nginx.
-
-#### Filesystem
-
-This is not recommended. If you're planning to use this, make sure backing up the keys.
-
-```
-storage:
-  type: filesystem
-  path: /path/to/directory/to/store/keys
-```
+- Amazon S3: [s3](./docs/storages/s3.md)
+- Filesystem: [filesystem](./docs/storages/filesystem.md)
+- Google Cloud Storage: [minimum2scp/acmesmith-google-cloud-storage](https://github.com/minimum2scp/acmesmith-google-cloud-storage) _(plugin)_
 
 ### Challenge Responders
 
 Challenge responders responds to ACME challenges to prove domain ownership to CA.
+
+- API driven
+  - AWS Route 53: [route53](./docs/challenge_responders/route53.md) (`dns-01`)
+  - Google Cloud DNS: [nagachika/acmesmith-google-cloud-dns](https://github.com/nagachika/acmesmith-google-cloud-dns) (`dns-01`, _plugin_ )
+  - OpenStack Designate v1: [hanazuki/acmesmith-designate](https://github.com/hanazuki/acmesmith-designate) (`dns-01`, _plugin_ )
+  - Verisign MDNS REST API: [benkap/acmesmith-verisign](https://github.com/benkap/acmesmith-verisign) (`dns-01`, _plugin_ )
+- Generic
+  - Static HTTP: [mipmip/acmesmith-http-path](https://github.com/mipmip/acmesmith-http-path) (`http-01`, _plugin_ )
+
+#### Common options
 
 ```yaml
 challenge_responders:
@@ -144,24 +122,9 @@ challenge_responders:
       domain_name_regexp:
         - '\Aapp\d+.example.org\z'
 
-
   - {RESPONDER_TYPE}:
       {RESPONDER_OPTIONS}
-```
-
-#### Route53
-
-Route53 responder supports `dns-01` challenge type. This assumes domain NS are managed under Route53 hosted zone.
-
-```
-challenge_responders:
-  - route53:
-      # aws_access_key: # aws credentials (optional); If omit, default configuration of aws-sdk use will be used.
-      #   access_key_id:
-      #   secret_access_key:
-      #   session_token:
-      # hosted_zone_map: # hosted zone map (optional); This is to specify exactly one hosted zone to use. This will be required when there are multiple hosted zone with same domain name. Usually
-      #   "example.org.": "/hostedzone/DEADBEEF"
+    ...
 ```
 
 ### Post Issuing Hooks
@@ -171,53 +134,30 @@ when a new certificate has been succesfully issued. The hooks are
 sequentially executed in the same order as they are configured, and they
 are configurable per certificate's common-name.
 
-#### `shell`
-
-Execute specified command on a shell. Environment variable `${COMMON_NAME}` is available.
-
-```
-post_issuing_hooks:
-  "test.example.com":
-    - shell:
-        command: mail -s "New cert for ${COMMON_NAME} has been issued" user@example.com < /dev/null
-    - shell:
-        command: touch /tmp/certs-has-been-issued-${COMMON_NAME}
-  "admin.example.com":
-    - shell:
-        command: /usr/bin/dosomethingelse ${COMMON_NAME}
-```
-
-### `acm`
-
-Import certificate into AWS ACM.
-
-```
-post_issuing_hooks:
-  "test.example.com":
-    - acm:
-        region: us-east-1 # required
-        certificate_arn: arn:aws:acm:... # (optional)
-```
-
-When `certificate_arn` is not present, `acm` hook attempts to find the certificate ARN from existing certificate list. Certificate with same common name ("domain name" on ACM), and `Acmesmith` tag
- will be used. Otherwise, `acm` hook imports as a new certificate with `Acmesmith` tag.
-
-## 3rd party Plugins
-
-### Challenge responders
-
-- [hanazuki/acmesmith-designate](https://github.com/hanazuki/acmesmith-designate) `dns-01` challenge responder with OpenStack-based DNSaaS (Designate v1 API), e.g. for ConoHa.
-- [nagachika/acmesmith-google-cloud-dns](https://github.com/nagachika/acmesmith-google-cloud-dns) `dns-01` challenge responder with [Google Cloud DNS](https://cloud.google.com/dns/).
-- [mipmip/acmesmith-http-path](https://github.com/mipmip/acmesmith-http-path) - `http-01` challenge reponder if you have write access to the vhost server root.
-- [benkap/acmesmith-verisign](https://github.com/benkap/acmesmith-verisign) - `dns-01` challenge responder with Verisign MDNS REST API.
-
-### Storage
-
-- [minimum2scp/acmesmith-google-cloud-storage](https://github.com/minimum2scp/acmesmith-google-cloud-storage) storage using [Google Cloud Storage](https://cloud.google.com/storage/)
+- Shell script: [shell](./docs/post_issuing_hooks/shell.md)
+- Amazon Certificate Manager (ACM): [acm](./docs/post_issuing_hooks/acm.md)
 
 ## Vendor dependent notes
 
 - [./docs/vendor/aws.md](./docs/vendor/aws.md): IAM and KMS key policies, and some tips
+
+### Todos
+
+- Tests
+
+## Contributing
+
+Bug reports and pull requests are welcome on GitHub at https://github.com/sorah/acmesmith.
+
+## Writing plugins
+
+Publish as a gem (RubyGems). Files will be loaded automatically from `lib/acmesmith/{plugin_type}/{name}.rb`.
+
+e.g.
+
+- storage: `lib/acmesmith/storages/perfect_storage.rb` & `Acmesmith::Storages::PerfectStorage`
+- challenge_responder: `lib/acmesmith/challenge_responders/perfect_authority.rb` & `Acmesmith::Storages::PerfectAuthority`
+- post_issuing_hook: `lib/acmesmith/challenge_responders/nice_deploy.rb` & `Acmesmith::Storages::NiceDeploy`
 
 ## Development
 
@@ -225,14 +165,6 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
-### Todos
-
-- Tests
-- Support post actions (notifying servers, deploying to somewhere, etc...)
-
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/acmesmith.
 
 
 ## License
