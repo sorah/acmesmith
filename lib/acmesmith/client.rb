@@ -245,9 +245,9 @@ module Acmesmith
         puts "=> Waiting for the validation..."
         puts
 
+        any_error = false
         loop do
           all_valid = true
-          any_error = false
           targets.each do |target|
             next if target[:valid]
 
@@ -284,6 +284,19 @@ module Acmesmith
           puts
 
           responder.cleanup_all(*ts.map{ |t| [t.fetch(:domain), t.fetch(:challenge)] })
+        end
+
+        if any_error
+          targets.each do |target|
+            $stderr.puts ""
+            $stderr.puts "!! Some identitiers failed to challenge"
+            $stderr.puts ""
+            targets.select { |_| _[:challenge].status != 'valid' }.each do |target|
+              $stderr.puts "   - #{target[:domain]}: #{target[:challenge].error.inspect}"
+            end
+            $stderr.puts ""
+          end
+          raise "Some identifiers failed to challenge: #{targets.select { |_| _[:challenge].status != 'valid' }.map{ |_| _[:domain] }.inspect}"
         end
 
         puts "=> Authorized!"
