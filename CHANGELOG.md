@@ -1,3 +1,36 @@
+## v2.3.0 (2020-05-12)
+
+### Enhancement
+
+- route53: Added support of assuming IAM Role to access Route 53. (requested at [#36](https://github.com/sorah/acmesmith/issues/36) [#37](https://github.com/sorah/acmesmith/pull/37) [#38](https://github.com/sorah/acmesmith/issues/36))
+
+- Added filter for challenge responders. This allows selecting a challenge responder for specific domain names. (indirectly requested at [#36](https://github.com/sorah/acmesmith/issues/36) [#37](https://github.com/sorah/acmesmith/pull/37) [#38](https://github.com/sorah/acmesmith/issues/36))
+
+  ```yaml
+  challenge_responders:
+    # Use specific IAM role for the domain "example.dev" ...
+    - route53:
+        assume_role:
+          role_arn: 'arn:aws:iam:...'
+      filter:
+        domain_name_exact:
+          - example.dev
+
+    - manual_dns: {}
+      filter:
+        domain_name_suffix:
+          - example.net
+
+    # Default
+    - route53: {}
+  ```
+
+### Fixes
+
+- Exported PKCS#12 were not included a certificate chain [#35](https://github.com/sorah/acmesmith/pulls/35)
+- s3: `use_kms` option was not respected for certificate keys & PKCS#12. It was always `true`.
+- A large refactoring of internal components.
+
 ## v2.2.0 (2018-08-08)
 
 ### Enhancement
