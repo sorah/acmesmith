@@ -142,7 +142,15 @@ module Acmesmith
         end.find do |rule|
           challenge = authz.challenges.find do |c|
             # OMG, acme-client might return a Hash instead of Acme::Client::Resources::Challenge::* object...
-            rule.challenge_responder.support?(c.is_a?(Hash) ? c[:challenge_type] : c.challenge_type)
+            challenge_type = case
+            when c.is_a?(Hash)
+              c[:challenge_type]
+            when c.is_a?(Acme::Client::Resources::Challenges::Unsupported)
+              next
+            when c.respond_to?(:challenge_type)
+              c.challenge_type
+            end
+            rule.challenge_responder.support?(challenge_type)
           end
         end
 

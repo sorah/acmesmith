@@ -43,6 +43,18 @@ module Acmesmith
       @config.merge!(pair)
     end
 
+    def directory
+      @config.fetch('directory')
+    end
+
+    def connection_options
+      @config['connection_options'] || {}
+    end
+
+    def bad_nonce_retry
+      @config['bad_nonce_retry'] || 0
+    end
+
     def account_key_passphrase
       @config['account_key_passphrase']
     end

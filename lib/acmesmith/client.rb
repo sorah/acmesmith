@@ -13,7 +13,7 @@ module Acmesmith
 
     def new_account(contact, tos_agreed: true)
       key = AccountKey.generate
-      acme = Acme::Client.new(private_key: key.private_key, directory: config.fetch('directory'))
+      acme = Acme::Client.new(private_key: key.private_key, directory: config.directory, connection_options: config.connection_options, bad_nonce_retry: config.bad_nonce_retry)
       acme.new_account(contact: contact, terms_of_service_agreed: tos_agreed)
 
       storage.put_account_key(key, account_key_passphrase)
@@ -178,7 +178,7 @@ module Acmesmith
     end
 
     def acme
-      @acme ||= Acme::Client.new(private_key: account_key.private_key, directory: config.fetch('directory'))
+      @acme ||= Acme::Client.new(private_key: account_key.private_key, directory: config.directory, connection_options: config.connection_options, bad_nonce_retry: config.bad_nonce_retry)
     end
 
     def certificate_key_passphrase

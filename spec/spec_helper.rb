@@ -18,4 +18,6 @@ PRIVATE_KEY = OpenSSL::PKey::RSA.generate(1024) # don't use 1024 in wild
 PRIVATE_KEY_PEM = PRIVATE_KEY.export
 PRIVATE_KEY_PEM_ENCRYPTED = PRIVATE_KEY.export(OpenSSL::Cipher.new('aes-256-cbc'), PASSPHRASE)
 
-
+RSpec.configure do |c|
+  c.filter_run_excluding :integration_pebble
+end
