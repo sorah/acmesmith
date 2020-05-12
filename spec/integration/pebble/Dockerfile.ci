@@ -1,0 +1,5 @@
+# vim: ft=dockerfile
+FROM sorah/ruby:RUBY_VERSION-dev
+WORKDIR /app
+COPY . /app/
+RUN bundle install --jobs 100

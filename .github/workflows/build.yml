@@ -17,6 +17,7 @@ jobs:
     name: rspec
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         ruby-version: ['2.6', '2.7']
     container:
@@ -26,6 +27,40 @@ jobs:
       - run: 'bundle install'
       - run: 'bundle exec rspec -fd'
 
+  integration-pebble:
+    name: integration-pebble
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby-version: ['2.6', '2.7']
+
+        # FIXME: once GitHub Actions gains support of adding command line arguments to container
+      #    services:
+      #      # https://github.com/letsencrypt/pebble
+      #      pebble:
+      #        image: letsencrypt/pebble
+      #        ports:
+      #          - 14000:14000  # ACME port
+      #          - 15000:15000  # Management port
+      #        options: "pebble -config /test/config/pebble-config.json -strict -dnsserver 127.0.0.1:8053"
+      #
+      #      challtestsrv:
+      #        image: letsencrypt/pebble-challtestsrv:latest
+      #        ports:
+      #          - 8055:8055  # HTTP Management API
+      #          - 8053:8053/udp # DNS
+      #          - 8053:8053 # DNS
+      #        options: 'pebble-challtestsrv -management :8055 -defaultIPv4 127.0.0.1'
+
+    steps:
+      - uses: actions/checkout@master
+      - run: 'docker run -d --net=host --rm letsencrypt/pebble pebble -config /test/config/pebble-config.json -strict -dnsserver 127.0.0.1:8053'
+      - run: 'docker run -d --net=host --rm letsencrypt/pebble-challtestsrv pebble-challtestsrv -management :8055 -defaultIPv4 127.0.0.1'
+      - run: 'sed -e "s|RUBY_VERSION|${{ matrix.ruby-version}}|g" spec/integration/pebble/Dockerfile.ci > /tmp/Dockerfile.ci'
+      - run: 'docker build -t test -f /tmp/Dockerfile.ci .'
+      - run: 'docker run --net=host -e CI --rm test bundle exec rspec -fd -t integration_pebble'
+
   docker-build:
     name: docker-build
     runs-on: ubuntu-latest
@@ -34,7 +69,8 @@ jobs:
       - run: 'echo $GITHUB_SHA > REVISION'
 
       - run: "docker pull ${DOCKER_REPO}:latest || :"
-      - run: |
+      - name: "docker tag ${DOCKER_REPO}:${TAG} ${DOCKER_REPO}:latest"
+        run: |
           TAG=$(basename "${{ github.ref }}")
           docker pull ${DOCKER_REPO}:${TAG}
           docker tag ${DOCKER_REPO}:${TAG} ${DOCKER_REPO}:latest
@@ -55,7 +91,7 @@ jobs:
 
   docker-push:
     name: docker-push
-    needs: [test, docker-build]
+    needs: [test, integration-pebble, docker-build]
     if: "${{ github.event_name == 'push' || github.event_name == 'release' }}"
     runs-on: ubuntu-latest
     steps:
