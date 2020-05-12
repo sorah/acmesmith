@@ -1,5 +1,7 @@
 # Acmesmith: A simple, effective ACME v2 client to use with many servers and a cloud
 
+![ci](https://github.com/sorah/acmesmith/workflows/ci/badge.svg?event=push)
+
 Acmesmith is an [ACME (Automatic Certificate Management Environment)](https://github.com/ietf-wg-acme/acme) client that works perfect on environment with multiple servers. This client saves certificate and keys on cloud services (e.g. AWS S3) securely, then allow to deploy issued certificates onto your servers smoothly. This works well on [Let's encrypt](https://letsencrypt.org).
 
 This tool is written in Ruby, but Acmesmith saves certificates in simple scheme, so you can fetch certificate by your own simple scripts.
@@ -32,6 +34,10 @@ Or install it yourself as:
     $ gem install acmesmith
 
 ### Docker
+
+```
+docker run -v /path/to/acmesmith.yml:/app/acmesmith.yml:ro sorah/acmesmith:latest
+```
 
 [`Dockerfile`](./Dockerfile) is available. Default confguration file is at `/app/acmesmith.yml`.
 
