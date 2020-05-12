@@ -9,7 +9,7 @@ on:
     branches: [master, ci-test]
 
 env:
-  DOCKER_REPO: 'sorah/ruby'
+  DOCKER_REPO: 'sorah/acmesmith'
 
 jobs:
   test:
