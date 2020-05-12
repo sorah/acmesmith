@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [master]
   push:
-    branches: [ci-test]
+    branches: [master, ci-test]
 
 env:
   DOCKER_REPO: 'sorah/ruby'
