@@ -1,6 +1,15 @@
+###
+### ACME Endpoint Configuration
+###
+
 directory: https://acme-staging-v02.api.letsencrypt.org/directory
 # directory: https://acme-v02.api.letsencrypt.org/directory
 
+###
+### Storage
+###
+
+# Check README and ./docs/storages/* for details
 storage:
   type: s3
   region: 'ap-northeast-1'
@@ -12,8 +21,38 @@ storage:
 #   type: filesystem
 #   path: ./storage
 
+###
+### Challenge responders
+###
+
+# Check README and ./docs/challenge_responders/* for details
 challenge_responders:
+  # Use dns_manual for subjects under ".manual-domain.example.org"
+  - dns_manual: {}
+    filter:
+      domain_name_suffix:
+        - .manual-domain.example.org
+      # domain_name_exact:
+      # domain_name_regexp:
+
+  # Last resort
   - route53: {}
 
-account_key_passphrase: password
-certificate_key_passphrase: secret
+###
+### advanced options
+###
+
+## Passphrase to encrypt key files (optional)
+# account_key_passphrase: password
+# certificate_key_passphrase: secret
+
+## Instead, read passphrases from $ACMESMITH_ACCOUNT_KEY_PASSPHRASE, $ACMESMITH_CERTIFICATE_KEY_PASSPHRASE
+# passphrase_from_env: true
+
+## ACME connection options (Faraday)
+# connection_options:
+#   :tls:
+#     :ca_file: custom_ca_bundle.pem
+
+## acme-client bad_nonce_retry
+# bad_nonce_retry: 2

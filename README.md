@@ -84,17 +84,18 @@ See `acmesmith help [subcommand]` for more help.
 See [config.sample.yml](./config.sample.yml) to start. Default configuration file is `./acmesmith.yml`.
 
 ``` yaml
-directory: https://acme-staging-v02.api.letsencrypt.org/directory
-# directory: https://acme-v02.api.letsencrypt.org/directory # production
+directory: https://acme-v02.api.letsencrypt.org/directory # production
 
 storage:
   # configure where to store keys and certificates; described later
+  type: s3
+  region: 'us-east-1'
+  bucket: 'my-acmesmith-bucket'
+  prefix: 'prod/'
 
 challenge_responders:
   # configure how to respond ACME challenges; described later
-
-account_key_passphrase: password
-certificate_key_passphrase: secret
+  - route53: {}
 ```
 
 ### Storage

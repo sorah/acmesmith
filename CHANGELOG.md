@@ -25,6 +25,8 @@
     - route53: {}
   ```
 
+- config: now accepts `connection_options` and `bad_nonce_retry` for [`Acme::Client`](https://github.com/unixcharles/acme-client).
+
 ### Fixes
 
 - Exported PKCS#12 were not included a certificate chain [#35](https://github.com/sorah/acmesmith/pulls/35)
