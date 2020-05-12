@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    acmesmith (2.3.0)
+    acmesmith (2.3.1)
       acme-client (~> 2)
       aws-sdk-acm
       aws-sdk-route53
