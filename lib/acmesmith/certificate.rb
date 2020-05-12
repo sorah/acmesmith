@@ -2,17 +2,32 @@ require 'openssl'
 
 module Acmesmith
   class Certificate
+    class PrivateKeyDecrypted < StandardError; end
     class PassphraseRequired < StandardError; end
 
+    CertificateExport = Struct.new(:certificate, :chain, :fullchain, :private_key, keyword_init: true)
+
+    # Split string containing multiple PEMs into Array of PEM strings.
+    # @param [String]
+    # @return [Array<String>]
     def self.split_pems(pems)
       pems.each_line.slice_before(/^-----BEGIN CERTIFICATE-----$/).map(&:join)
     end
 
+    # Return Acmesmith::Certificate by an issued certificate
+    # @param pem_chain [String]
+    # @param csr [Acme::Client::CertificateRequest]
+    # @return [Acmesmith::Certificate]
     def self.by_issuance(pem_chain, csr)
       pems = split_pems(pem_chain)
       new(pems[0], pems[1..-1], csr.private_key, nil, csr)
     end
 
+    # @param certificate [OpenSSL::X509::Certificate, String]
+    # @param chain [String, Array<String>, Array<OpenSSL::X509::Certificate>]
+    # @param private_key [String, OpenSSL::PKey::RSA]
+    # @param key_passphrase [String, nil]
+    # @param csr [String, OpenSSL::X509::Request, nil]
     def initialize(certificate, chain, private_key, key_passphrase = nil, csr = nil)
       @certificate = case certificate
                      when OpenSSL::X509::Certificate
@@ -72,10 +87,18 @@ module Acmesmith
              end
     end
 
-    attr_reader :certificate, :chain, :csr
+    # @return [OpenSSL::X509::Certificate]
+    attr_reader :certificate
+    # @return [Array<OpenSSL::X509::Certificate>]
+    attr_reader :chain
+    # @return [OpenSSL::X509::Request]
+    attr_reader :csr
 
+    # Try to decrypt private_key if encrypted.
+    # @param pw [String] passphrase for encrypted PEM
+    # @raise [PrivateKeyDecrypted] if private_key is decrypted
     def key_passphrase=(pw)
-      raise 'private_key already given' if @private_key
+      raise PrivateKeyDecrypted, 'private_key already given' if @private_key
 
       @private_key = OpenSSL::PKey::RSA.new(@raw_private_key, pw)
 
@@ -83,44 +106,52 @@ module Acmesmith
       nil
     end
 
+    # @return [OpenSSL::PKey::RSA]
+    # @raise [PassphraseRequired] if private_key is not yet decrypted
     def private_key
       return @private_key if @private_key
       raise PassphraseRequired, 'key_passphrase required'
     end
 
+    # @return [String] leaf certificate + full certificate chain
     def fullchain
       "#{certificate.to_pem}\n#{issuer_pems}".gsub(/\n+/,?\n)
     end
 
+    # @return [String] issuer certificate chain
     def issuer_pems
       chain.map(&:to_pem).join("\n")
     end
 
+    # @return [String] common name
     def common_name
       certificate.subject.to_a.assoc('CN')[1]
     end
 
+    # @return [Array<String>] Subject Alternative Names (dNSname)
     def sans
       certificate.extensions.select { |_| _.oid == 'subjectAltName' }.flat_map do |ext|
         ext.value.split(/,\s*/).select { |_| _.start_with?('DNS:') }.map { |_| _[4..-1] }
       end
     end
 
+    # @return [String] Version string (consists of NotBefore time & certificate serial)
     def version
       "#{certificate.not_before.utc.strftime('%Y%m%d-%H%M%S')}_#{certificate.serial.to_i.to_s(16)}"
     end
 
+    # @return [OpenSSL::PKCS12]
     def pkcs12(passphrase)
       OpenSSL::PKCS12.create(passphrase, common_name, private_key, certificate, chain)
     end
 
+    # @return [CertificateExport]
     def export(passphrase, cipher: OpenSSL::Cipher.new('aes-256-cbc'))
-      {}.tap do |h|
-        h[:certificate] = certificate.to_pem
-        h[:chain] = issuer_pems
-        h[:fullchain] = fullchain
-
-        h[:private_key] = if passphrase
+      CertificateExport.new.tap do |h|
+        h.certificate = certificate.to_pem
+        h.chain = issuer_pems
+        h.fullchain = fullchain
+        h.private_key = if passphrase
           private_key.export(cipher, passphrase)
         else
           private_key.export

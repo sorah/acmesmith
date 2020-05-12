@@ -1,17 +1,19 @@
 module Acmesmith
   module ChallengeResponders
     class Base
-      # Return supported challenge types
+      # @param type [String] ACME challenge type (dns-01, http-01, ...)
+      # @return [true, false] true when given challenge type is supported
       def support?(type)
         raise NotImplementedError
       end
 
-      # Return 'true' when supports given domain name
+      # @param domain [String] target FQDN for a ACME authorization challenge
+      # @return [true, false] true when a responder is able to challenge against given domain name
       def applicable?(domain)
         true
       end
 
-      # Return 'true' if implements respond_all method.
+      # @return [true, false] true when implements #respond_all, #cleanup_all
       def cap_respond_all?
         false
       end
@@ -20,6 +22,7 @@ module Acmesmith
       end
 
       # Respond to the given challenges (1 or more).
+      # @param domain_and_challenges [Array<(String, Acme::Client::Resources::Challenges::Base)>] array of tuple of domain name and ACME challenge
       def respond_all(*domain_and_challenges)
         if cap_respond_all?
           raise NotImplementedError
@@ -31,6 +34,7 @@ module Acmesmith
       end
 
       # Clean up responses for the given challenges (1 or more).
+      # @param domain_and_challenges [Array<(String, Acme::Client::Resources::Challenges::Base)>] array of tuple of domain name and ACME challenge
       def cleanup_all(*domain_and_challenges)
         if cap_respond_all?
           raise NotImplementedError

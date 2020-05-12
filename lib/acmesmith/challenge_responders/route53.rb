@@ -59,9 +59,6 @@ module Acmesmith
 
       private
 
-      def static_credentials
-      end
-
       def request_changing_rrset(zone_and_batches, comment: nil)
         puts "=> Requesting RRSet change #{comment}"
         puts

@@ -1,52 +1,92 @@
+require 'spec_helper'
+require 'openssl'
+
 require 'acmesmith/account_key'
 
 RSpec.describe Acmesmith::AccountKey do
-  describe '#private_key' do
-    let(:private_key) { OpenSSL::PKey::RSA.generate(2048) }
+  let(:given_private_key) { PRIVATE_KEY_PEM }
+  let(:given_passphrase) { nil }
 
-    context 'with passphrase' do
-      let(:cipher) { OpenSSL::Cipher.new('aes-256-cbc') }
-      let(:passphrase) { 'notasecret' }
-      let(:exported_private_key) { private_key.export(cipher, passphrase) }
-      let(:account_key) { described_class.new(exported_private_key) }
+  subject(:account_key) do
+    described_class.new(
+      given_private_key,
+      given_passphrase,
+    )
+  end
 
-      context 'when correct passphrase is passed' do
-        before do
-          account_key.key_passphrase = passphrase
-        end
+  context "with String" do
+    let(:given_private_key) { PRIVATE_KEY_PEM }
 
-        it 'returns private key' do
-          expect(account_key.private_key.to_text).to eq(private_key.to_text)
-        end
-      end
+    it "works" do
+      expect(account_key.private_key).to be_a(OpenSSL::PKey::RSA)
+      expect(account_key.private_key.to_pem).to eq(PRIVATE_KEY.to_pem)
+    end
+  end
 
-      context 'when wrong passphrase is passed' do
-        it 'raises RSAError' do
-          expect { account_key.key_passphrase = 'wrong-passphrase' }.to raise_error(OpenSSL::PKey::RSAError)
-        end
-      end
+  context "with OpenSSL" do
+    let(:given_private_key) { PRIVATE_KEY }
 
-      context "when passphrase isn't passed" do
-        it 'raises PassphraseRequired' do
-          expect { account_key.private_key }.to raise_error(Acmesmith::AccountKey::PassphraseRequired)
-        end
+    it "works" do
+      expect(account_key.private_key).to be_a(OpenSSL::PKey::RSA)
+      expect(account_key.private_key.to_pem).to eq(PRIVATE_KEY.to_pem)
+    end
+  end
+
+  describe "#private_key" do
+    let(:given_private_key) { PRIVATE_KEY_PEM_ENCRYPTED }
+    subject(:private_key) { account_key.private_key }
+
+    context "when passphrase is not given" do
+      let(:given_passphrase) { nil }
+
+      it "raises error" do
+        expect { subject }.to raise_error(Acmesmith::AccountKey::PassphraseRequired)
       end
     end
 
-    context 'without passphrase' do
-      let(:exported_private_key) { private_key.export }
-      let(:account_key) { described_class.new(exported_private_key) }
+    context "when passphrase is given at initialize" do
+      let(:given_passphrase) { PASSPHRASE }
+      it "works" do
+        expect(private_key).to be_a(OpenSSL::PKey::RSA)
+        expect(private_key.to_pem).to eq(PRIVATE_KEY.to_pem)
+      end
+    end
 
-      context "when passphrase isn't passed" do
-        it 'returns private key' do
-          expect(account_key.private_key.to_text).to eq(private_key.to_text)
-        end
+    context "when passphrase is given later" do
+      let(:given_passphrase) { nil }
+
+      before do
+        account_key.key_passphrase = PASSPHRASE
       end
 
-      context 'when passphrase is passed' do
-        it 'raises error' do
-          expect { account_key.key_passphrase = 'notasecret' }.to raise_error(/already given/)
-        end
+      it "works" do
+        expect(private_key).to be_a(OpenSSL::PKey::RSA)
+        expect(private_key.to_pem).to eq(PRIVATE_KEY.to_pem)
+      end
+    end
+
+    context "when passphrase is given twice" do
+      let(:given_passphrase) { PASSPHRASE }
+      it "raises error" do
+        expect { account_key.key_passphrase = PASSPHRASE }.to raise_error(Acmesmith::AccountKey::PrivateKeyDecrypted)
+      end
+    end
+  end
+
+  describe "#export" do
+    let(:export_passphrase) { nil }
+    subject(:export) { account_key.export(export_passphrase) }
+    
+    it "works" do
+      expect(export).to eq(PRIVATE_KEY.to_pem)
+    end
+
+    context "with passphrase" do
+      let(:export_passphrase) { PASSPHRASE }
+      it "works" do
+        expect(export).to be_a(String)
+        expect { OpenSSL::PKey::RSA.new(export, '') }.to raise_error(OpenSSL::PKey::RSAError)
+        expect(OpenSSL::PKey::RSA.new(export, export_passphrase).to_pem).to eq(PRIVATE_KEY.to_pem)
       end
     end
   end
