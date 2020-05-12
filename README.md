@@ -148,13 +148,23 @@ are configurable per certificate's common-name.
 
 - [./docs/vendor/aws.md](./docs/vendor/aws.md): IAM and KMS key policies, and some tips
 
-### Todos
-
-- Tests
-
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/sorah/acmesmith.
+
+### Running tests
+
+unit test:
+
+```
+bundle exec rspec
+```
+
+integration test using [letsencrypt/pebble](https://github.com/letsencrypt/pebble). needs Docker:
+
+```
+ACMESMITH_CI_START_PEBBLE=1 CI=1 bundle exec -t integration_pebble
+```
 
 ## Writing plugins
 

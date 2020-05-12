@@ -1,0 +1,17 @@
+directory: https://localhost:14000/dir
+bad_nonce_retry: 5
+connection_options:
+  :ssl:
+    :ca_file: tmp/pebble.minica.crt
+storage:
+  type: filesystem
+  path: tmp/integration-pebble
+challenge_responders:
+  - pebble_challtestsrv_dns: {}
+
+post_issuing_hooks:
+  "flag.invalid":
+    - shell:
+        command: touch tmp/integration-pebble/flag-${COMMON_NAME}
+
+passphrase_from_env: true
