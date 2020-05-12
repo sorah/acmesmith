@@ -1,0 +1,73 @@
+name: ci
+on: 
+  schedule:
+    - cron: '36 7 2,12,22 * *'
+  release:
+    types: [published]
+  pull_request:
+    branches: [master]
+  push:
+    branches: [ci-test]
+
+env:
+  DOCKER_REPO: 'sorah/ruby'
+
+jobs:
+  test:
+    name: rspec
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby-version: ['2.6', '2.7']
+    container:
+      image: sorah/ruby:${{ matrix.ruby-version }}-dev
+    steps:
+      - uses: actions/checkout@master
+      - run: 'bundle install'
+      - run: 'bundle exec rspec -fd'
+
+  docker-build:
+    name: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - run: 'echo $GITHUB_SHA > REVISION'
+
+      - run: "docker pull ${DOCKER_REPO}:latest || :"
+      - run: |
+          TAG=$(basename "${{ github.ref }}")
+          docker pull ${DOCKER_REPO}:${TAG}
+          docker tag ${DOCKER_REPO}:${TAG} ${DOCKER_REPO}:latest
+        if: "${{ startsWith(github.ref, 'refs/tags/v') }}"
+
+      - run: "docker pull ${DOCKER_REPO}:builder || :"
+
+      - run: "docker build --pull --cache-from ${DOCKER_REPO}:builder --target builder -t ${DOCKER_REPO}:builder -f Dockerfile ."
+      - run: "docker build --pull --cache-from ${DOCKER_REPO}:builder --cache-from ${DOCKER_REPO}:latest -t ${DOCKER_REPO}:${GITHUB_SHA} -f Dockerfile ."
+
+      - run: "echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u sorah --password-stdin"
+        if: "${{ github.event_name != 'pull_request' }}"
+
+      - run: "docker push ${DOCKER_REPO}:builder"
+        if: "${{ github.ref == 'refs/heads/master' }}"
+      - run: "docker push ${DOCKER_REPO}:${GITHUB_SHA}"
+        if: "${{ github.event_name != 'pull_request' }}"
+
+  docker-push:
+    name: docker-push
+    needs: [test, docker-build]
+    if: "${{ github.event_name == 'push' || github.event_name == 'release' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - run: "echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u sorah --password-stdin"
+      - run: "docker pull ${DOCKER_REPO}:${GITHUB_SHA}"
+
+      - run: |
+          docker tag ${DOCKER_REPO}:${GITHUB_SHA} ${DOCKER_REPO}:latest
+          docker push ${DOCKER_REPO}:latest
+        if: "${{ github.ref == 'refs/heads/master' }}"
+      - run: |
+          TAG=$(basename "${{ github.ref }}")
+          docker tag ${DOCKER_REPO}:${GITHUB_SHA} ${DOCKER_REPO}:${TAG}
+          docker push ${DOCKER_REPO}:${TAG}
+        if: "${{ startsWith(github.ref, 'refs/tags/v') }}"
