@@ -13,12 +13,12 @@
         assume_role:
           role_arn: 'arn:aws:iam:...'
       filter:
-        domain_name_exact:
+        subject_name_exact:
           - example.dev
 
     - manual_dns: {}
       filter:
-        domain_name_suffix:
+        subject_name_suffix:
           - example.net
 
     # Default

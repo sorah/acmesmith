@@ -30,10 +30,10 @@ challenge_responders:
   # Use dns_manual for subjects under ".manual-domain.example.org"
   - dns_manual: {}
     filter:
-      domain_name_suffix:
+      subject_name_suffix:
         - .manual-domain.example.org
-      # domain_name_exact:
-      # domain_name_regexp:
+      # subject_name_exact:
+      # subject_name_regexp:
 
   # Last resort
   - route53: {}

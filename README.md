@@ -129,11 +129,11 @@ challenge_responders:
 
     ### Filter (optional)
     filter:
-      domain_name_exact:
+      subject_name_exact:
         - my-app.example.com
-      domain_name_suffix:
+      subject_name_suffix:
         - .example.org
-      domain_name_regexp:
+      subject_name_regexp:
         - '\Aapp\d+.example.org\z'
 
   - {RESPONDER_TYPE}:
