@@ -23,7 +23,7 @@ module Acmesmith
         @kms_key_id_account = kms_key_id_account
         @kms_key_id_certificate_key = kms_key_id_certificate_key
 
-        @s3 = Aws::S3::Client.new({region: region, signature_version: 'v4'}.tap do |opt| 
+        @s3 = Aws::S3::Client.new({region: region}.tap do |opt| 
           opt[:credentials] = Aws::Credentials.new(aws_access_key['access_key_id'], aws_access_key['secret_access_key'], aws_access_key['session_token']) if aws_access_key
         end)
       end
