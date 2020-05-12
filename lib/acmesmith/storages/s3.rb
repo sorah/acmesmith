@@ -85,10 +85,10 @@ module Acmesmith
         put.call certificate_key(cert.common_name, cert.version), "#{h[:certificate].rstrip}\n", false
         put.call chain_key(cert.common_name, cert.version), "#{h[:chain].rstrip}\n", false
         put.call fullchain_key(cert.common_name, cert.version), "#{h[:fullchain].rstrip}\n", false
-        put.call private_key_key(cert.common_name, cert.version), "#{h[:private_key].rstrip}\n", true
+        put.call private_key_key(cert.common_name, cert.version), "#{h[:private_key].rstrip}\n", use_kms
 
         if generate_pkcs12?(cert)
-          put.call pkcs12_key(cert.common_name, cert.version), "#{cert.pkcs12(@pkcs12_passphrase).to_der}\n", true, 'application/x-pkcs12'
+          put.call pkcs12_key(cert.common_name, cert.version), "#{cert.pkcs12(@pkcs12_passphrase).to_der}\n", use_kms, 'application/x-pkcs12'
         end
 
         if update_current
