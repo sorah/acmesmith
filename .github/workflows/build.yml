@@ -2,8 +2,7 @@ name: ci
 on: 
   schedule:
     - cron: '36 7 2,12,22 * *'
-  release:
-    types: [published]
+  create: {}
   pull_request:
     branches: [master]
   push:
@@ -86,8 +85,8 @@ jobs:
       - name: "docker tag ${DOCKER_REPO}:${TAG} ${DOCKER_REPO}:latest"
         run: |
           TAG=$(basename "${{ github.ref }}")
-          docker pull ${DOCKER_REPO}:${TAG}
-          docker tag ${DOCKER_REPO}:${TAG} ${DOCKER_REPO}:latest
+          docker pull ${DOCKER_REPO}:${TAG} || :
+          docker tag ${DOCKER_REPO}:${TAG} ${DOCKER_REPO}:latest || :
         if: "${{ startsWith(github.ref, 'refs/tags/v') }}"
 
       - run: "docker pull ${DOCKER_REPO}:builder || :"
@@ -106,7 +105,7 @@ jobs:
   docker-push:
     name: docker-push
     needs: [test, integration-pebble, docker-build]
-    if: "${{ github.event_name == 'push' || github.event_name == 'release' }}"
+    if: "${{ github.event_name == 'push' || github.event_name == 'create' }}"
     runs-on: ubuntu-latest
     steps:
       - run: "echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u sorah --password-stdin"

@@ -1,3 +1,9 @@
+## v2.3.1 (2020-05-12)
+
+### Fixes
+
+- Fixing Docker image build has failed for the release tag. https://github.com/sorah/acmesmith/runs/665853406
+
 ## v2.3.0 (2020-05-12)
 
 ### Enhancement
