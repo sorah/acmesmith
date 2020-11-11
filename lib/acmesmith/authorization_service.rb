@@ -69,9 +69,30 @@ module Acmesmith
       puts "=> Requesting validations..."
       puts
       processes.each do |process|
-        print " * #{process.domain} (#{process.challenge.challenge_type}) ..."
-        process.challenge.request_validation()
-        puts " [ ok ]"
+        challenge = process.challenge
+        print " * #{process.domain} (#{challenge.challenge_type}) ..."
+        retried = false
+        begin
+          challenge.request_validation()
+          puts " [ ok ]"
+        rescue Acme::Client::Error::Malformed
+          # Rescue in case of requesting validation for a challenge which has already determined valid (asynchronously while we're receiving it).
+          # LE Boulder doesn't take this as an error, but pebble do.
+          # https://github.com/letsencrypt/boulder/blob/ebba443cad233111ee2b769ef09b32a13c3ba57e/wfe2/wfe.go#L1235
+          # https://github.com/letsencrypt/pebble/blob/b60b0b677c280ccbf63de55a26775591935c448b/wfe/wfe.go#L2166
+          challenge.reload
+          if process.valid?
+            puts " [ ok ] (turned valid in background)"
+            next
+          end
+
+          if retried
+            raise
+          else
+            retried = true
+            retry
+          end
+        end
       end
       puts
 
