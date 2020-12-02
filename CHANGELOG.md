@@ -1,3 +1,9 @@
+## v2.4.0 (2020-05-12)
+
+### Enhancement
+
+- route53: Gains `restore_to_original_records` option. When enabled, existing record will be restored after authorizing domain names. Useful when other ACME tools or providers using ACME where requires a certain record to remain as long as possible for their renewal process (e.g. Fastly TLS).
+
 ## v2.3.1 (2020-05-12)
 
 ### Fixes
