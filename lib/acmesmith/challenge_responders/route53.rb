@@ -17,7 +17,7 @@ module Acmesmith
         true
       end
 
-      def initialize(aws_access_key: nil, assume_role: nil, hosted_zone_map: {})
+      def initialize(aws_access_key: nil, assume_role: nil, hosted_zone_map: {}, restore_to_original_records: false)
         aws_options = {region: 'us-east-1'}.tap do |opt| 
           opt[:credentials] = Aws::Credentials.new(aws_access_key['access_key_id'], aws_access_key['secret_access_key'], aws_access_key['session_token']) if aws_access_key
         end
@@ -34,13 +34,25 @@ module Acmesmith
 
         @hosted_zone_map = hosted_zone_map
         @hosted_zone_cache = {}
+
+        @restore_to_original_records = restore_to_original_records
+        @original_records = {}
       end
 
       def respond_all(*domain_and_challenges)
+        save_original_records(*domain_and_challenges) if @restore_to_original_records
+
         challenges_by_hosted_zone = domain_and_challenges.group_by { |(domain, _)| find_hosted_zone(domain) }
 
         zone_and_batches = challenges_by_hosted_zone.map do |zone_id, dcs|
-          [zone_id, change_batch_for_challenges(dcs, action: 'UPSERT')]
+          [
+            zone_id,
+            change_batch_for_challenges(
+              dcs,
+              action: 'UPSERT',
+              pre_changes: changes_to_delete_original_cname(zone_id, *dcs),
+            ),
+          ]
         end
 
         change_ids = request_changing_rrset(zone_and_batches, comment: 'for challenge response')
@@ -51,13 +63,84 @@ module Acmesmith
         challenges_by_hosted_zone = domain_and_challenges.group_by { |(domain, _)| find_hosted_zone(domain) }
 
         zone_and_batches = challenges_by_hosted_zone.map do |zone_id, dcs|
-          [zone_id, change_batch_for_challenges(dcs, action: 'DELETE', comment: '(cleanup)')]
+          [
+            zone_id,
+            change_batch_for_challenges(
+              dcs,
+              action: 'DELETE',
+              comment: '(cleanup)',
+              post_changes: changes_to_restore_original_records(zone_id, *dcs),
+            ),
+          ]
         end
 
         request_changing_rrset(zone_and_batches, comment: 'to remove challenge responses')
       end
 
       private
+
+      def save_original_records(*domain_and_challenges)
+        domain_and_challenges.each do |domain, challenge|
+
+          hosted_zone_id = find_hosted_zone(domain)
+          name = "#{challenge.record_name}.#{domain}."
+
+          rrsets = list_existing_rrsets(hosted_zone_id, name)
+          next if rrsets.empty?
+
+          @original_records[hosted_zone_id] ||= {}
+          @original_records[hosted_zone_id][name] = rrsets
+          puts "   * original_record: #{domain}(#{hosted_zone_id}): #{rrsets.inspect}"
+
+        end
+      end
+
+      def changes_to_delete_original_cname(zone_id, *domain_and_challenges)
+        @original_records[zone_id] ||= {}
+        domain_and_challenges.map do |domain, challenge|
+          name = "#{challenge.record_name}.#{domain}."
+          original_records = @original_records[zone_id][name]
+          next unless original_records
+          original_cname = original_records.find{ |_| _.type == 'CNAME' }
+          next unless original_cname
+
+          # FIXME: support set_identifier?
+          {
+            action: 'DELETE',
+            resource_record_set: {
+              name: original_cname.name,
+              ttl: original_cname.ttl,
+              type: original_cname.type,
+              resource_records: original_cname.resource_records.map(&:to_h),
+              alias_target: original_cname.alias_target&.to_h,
+            },
+          }
+        end.compact
+      end
+
+      def changes_to_restore_original_records(zone_id, *domain_and_challenges)
+        @original_records[zone_id] ||= {}
+        domain_and_challenges.flat_map do |domain, challenge|
+          name = "#{challenge.record_name}.#{domain}."
+          original_records = @original_records[zone_id][name]
+          next unless original_records
+
+          # FIXME: support set_identifier?
+          original_records.map do |original_record|
+            next if original_record.type != challenge.record_type && original_record.type != 'CNAME'
+            {
+              action: 'CREATE',
+              resource_record_set: {
+                name: original_record.name,
+                ttl: original_record.ttl,
+                type: original_record.type,
+                resource_records: original_record.resource_records.map(&:to_h),
+                alias_target: original_record.alias_target&.to_h,
+              },
+            }
+          end
+        end.compact
+      end
 
       def request_changing_rrset(zone_and_batches, comment: nil)
         puts "=> Requesting RRSet change #{comment}"
@@ -107,10 +190,9 @@ module Acmesmith
           end
         end
         puts
-
       end
 
-      def change_batch_for_challenges(domain_and_challenges, comment: nil, action: 'UPSERT')
+      def change_batch_for_challenges(domain_and_challenges, comment: nil, action: 'UPSERT', pre_changes: [], post_changes: [])
         changes = domain_and_challenges
           .map do |d, c|
             rrset_for_challenge(d, c)
@@ -133,7 +215,7 @@ module Acmesmith
 
         {
           comment: "ACME challenge response #{comment}",
-          changes: changes,
+          changes: pre_changes + changes + post_changes,
         }
       end
 
@@ -180,6 +262,40 @@ module Acmesmith
               .map {  |zone| [zone.name, zone.id] }
           end.group_by(&:first).map { |domain, kvs| [domain, kvs.map(&:last)] }.to_h.merge(hosted_zone_map)
         end
+      end
+
+      def list_existing_rrsets(hosted_zone_id, name)
+        rrsets = []
+        start_record_name = name
+        start_record_type = nil
+        start_record_identifier = nil
+
+        while start_record_name == name
+          begin
+            tries = 0
+            page = @route53.list_resource_record_sets(
+              hosted_zone_id: hosted_zone_id,
+              start_record_name: start_record_name,
+              start_record_type: start_record_type,
+              start_record_identifier: start_record_identifier,
+              max_items: 10,
+            )
+            page.resource_record_sets.each do |rrset|
+              rrsets << rrset if rrset.name == name
+            end
+
+            start_record_name = page.next_record_name
+            start_record_type = page.next_record_type
+            start_record_identifier = page.next_record_identifier
+          rescue Aws::Route53::Errors::Throttling => e
+            interval = (2**tries) * 0.1
+            $stderr.puts "   ! #{e.class}: Sleeping #{interval} seconds (#{e.message})"
+            sleep interval
+            tries += 1
+            retry
+          end
+        end
+        rrsets
       end
     end
   end
