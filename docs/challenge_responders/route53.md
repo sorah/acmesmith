@@ -21,6 +21,10 @@ challenge_responders:
       ##  Required when you have multiple hosted zones for the same domain name.
       hosted_zone_map: 
         "example.org.": "/hostedzone/DEADBEEF"
+
+      # Restore to original records on cleanup (after domain authorization). Default to false.
+      # Useful when you need to keep existing record as long as possible.
+      restore_to_original_records: true
 ```
 
 ## IAM Policy

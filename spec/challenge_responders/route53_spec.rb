@@ -13,6 +13,7 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
   let(:aws_access_key) { nil }
   let(:assume_role) { nil }
   let(:hosted_zone_map) { {} }
+  let(:restore_to_original_records) { false }
 
   let(:r53) { double(:route53) }
 
@@ -20,7 +21,8 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
     described_class.new(
       aws_access_key: aws_access_key,
       assume_role: assume_role,
-      hosted_zone_map: hosted_zone_map
+      hosted_zone_map: hosted_zone_map,
+      restore_to_original_records: restore_to_original_records,
     )
   end
 
@@ -382,6 +384,114 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
             cleanup_all
           end
         end
+      end
+    end
+
+    context "when restore_to_original_records is set" do
+      let(:restore_to_original_records) { true }
+      let(:domain_and_challenges) do
+        [
+          ['akane.example.com', double_challenge],
+          ['yaeka.example.com', double_challenge],
+        ]
+      end
+
+      subject(:roundtrip) {
+        responder.respond_all(*domain_and_challenges) 
+        responder.cleanup_all(*domain_and_challenges) 
+      }
+
+      before do
+        allow(r53).to receive(:list_resource_record_sets).with(
+          hosted_zone_id: '/hostedzone/example.com', 
+          start_record_name: '_acme-challenge.akane.example.com.',
+          start_record_type: nil,
+          start_record_identifier: nil,
+          max_items: 10,
+        ).and_return(
+          Aws::Route53::Types::ListResourceRecordSetsResponse.new(
+            resource_record_sets: [
+              Aws::Route53::Types::ResourceRecordSet.new(
+                name: '_acme-challenge.akane.example.com.',
+                type: 'CNAME',
+                ttl: 60,
+                resource_records: [
+                  Aws::Route53::Types::ResourceRecord.new(value: 'delegated-validation.example.net.'),
+                ],
+              ),
+            ],
+            next_record_name: '_c.example.com.',
+            next_record_type: 'A',
+            next_record_identifier: nil,
+          ),
+        )
+
+        allow(r53).to receive(:list_resource_record_sets).with(
+          hosted_zone_id: '/hostedzone/example.com', 
+          start_record_name: '_acme-challenge.yaeka.example.com.',
+          start_record_type: nil,
+          start_record_identifier: nil,
+          max_items: 10,
+        ).and_return(
+          Aws::Route53::Types::ListResourceRecordSetsResponse.new(
+            resource_record_sets: [
+              Aws::Route53::Types::ResourceRecordSet.new(name: '_b.example.com.'),
+            ],
+            next_record_name: '_c.example.com.',
+            next_record_type: 'A',
+            next_record_identifier: nil,
+          ),
+        )
+
+        expect_change_rrset(
+          hosted_zone_id: '/hostedzone/example.com',
+          comment: 'ACME challenge response ',
+          changes: [
+            {
+              action: 'DELETE',
+              resource_record_set: {
+                name: "_acme-challenge.akane.example.com.",
+                ttl: 60,
+                type: 'CNAME',
+                alias_target: nil,
+                resource_records: [
+                  {
+                    value: "delegated-validation.example.net.",
+                  },
+                ],
+              },
+            },
+            change_object(action: 'UPSERT', name: domain_and_challenges[0][0], challenge: domain_and_challenges[0][1]),
+            change_object(action: 'UPSERT', name: domain_and_challenges[1][0], challenge: domain_and_challenges[1][1]),
+          ],
+        )
+        expect_change_rrset(
+          hosted_zone_id: '/hostedzone/example.com',
+          comment: 'ACME challenge response (cleanup)',
+          changes: [
+            change_object(action: 'DELETE', name: domain_and_challenges[0][0], challenge: domain_and_challenges[0][1]),
+            change_object(action: 'DELETE', name: domain_and_challenges[1][0], challenge: domain_and_challenges[1][1]),
+            {
+              action: 'CREATE',
+              resource_record_set: {
+                name: "_acme-challenge.akane.example.com.",
+                ttl: 60,
+                type: 'CNAME',
+                alias_target: nil,
+                resource_records: [
+                  {
+                    value: "delegated-validation.example.net.",
+                  },
+                ],
+              },
+            },
+          ],
+          wait: false,
+        )
+      end
+
+      it "restores to original records on cleanup" do
+        roundtrip
       end
     end
   end
