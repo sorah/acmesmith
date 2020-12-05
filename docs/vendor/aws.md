@@ -20,12 +20,18 @@
       "Effect": "Allow",
       "Action": "route53:ChangeResourceRecordSets",
       "Resource": ["arn:aws:route53:::hostedzone/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": "route53:ListResourceRecordSets",
+      "Resource": ["arn:aws:route53:::hostedzone/*"]
     }
   ]
 }
 ```
 
-Note: You can limit allowed hosted zone by modifying `Resource` of `route53:ChangeResourceRecordSets`
+- You can limit allowed hosted zone by `Resource` of `route53:ChangeResourceRecordSets` grant
+- `route53:ListResourceRecordSets` will be only required when `restore_to_original_records` is set
 
 ##### Only fetching certificates
 
