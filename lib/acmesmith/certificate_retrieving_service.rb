@@ -29,7 +29,6 @@ module Acmesmith
       chains = [CertificateChain.new(pem), *alternative_chains]
 
       chains.each_with_index do |chain, i|
-        File.write "/tmp/acme-chain.#{i}.pem", chain.pem_chain
         puts "   #{i.succ}. #{chain.to_s}"
       end
       puts
