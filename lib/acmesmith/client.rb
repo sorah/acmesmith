@@ -26,6 +26,7 @@ module Acmesmith
         acme: acme,
         identifiers: identifiers,
         challenge_responder_rules: config.challenge_responders,
+        chain_preferences: config.chain_preferences,
         not_before: not_before,
         not_after: not_after
       )
