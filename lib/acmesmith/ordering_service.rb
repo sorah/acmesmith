@@ -1,5 +1,6 @@
 require 'acmesmith/authorization_service'
 require 'acmesmith/certificate'
+require 'acmesmith/certificate_retrieving_service'
 
 module Acmesmith
   class OrderingService
@@ -8,17 +9,19 @@ module Acmesmith
     # @param acme [Acme::Client] ACME client
     # @param identifiers [Array<String>] Array of domain names for a ordering certificate. The first item will be a common name.
     # @param challenge_responder_rules [Array<Acmesmith::Config::ChallengeResponderRule>] responders
+    # @param chain_preferences [Array<Acmesmith::Config::ChainPreference>] chain_preferences
     # @param not_before [Time]
     # @param not_after [Time]
-    def initialize(acme:, identifiers:, challenge_responder_rules:, not_before: nil, not_after: nil)
+    def initialize(acme:, identifiers:, challenge_responder_rules:, chain_preferences:, not_before: nil, not_after: nil)
       @acme = acme
       @identifiers = identifiers
       @challenge_responder_rules = challenge_responder_rules
+      @chain_preferences = chain_preferences
       @not_before = not_before
       @not_after = not_after
     end
 
-    attr_reader :acme, :identifiers, :challenge_responder_rules, :not_before, :not_after
+    attr_reader :acme, :identifiers, :challenge_responder_rules, :chain_preferences, :not_before, :not_after
 
     def perform!
       puts "=> Ordering a certificate for the following identifiers:"
@@ -38,7 +41,7 @@ module Acmesmith
       finalize_order()
       wait_order_for_complete()
 
-      @certificate = Certificate.by_issuance(order.certificate, csr)
+      @certificate = Certificate.by_issuance(pem_chain, csr)
 
       puts
       puts "=> Certificate issued"
@@ -75,6 +78,12 @@ module Acmesmith
         puts " * Waiting for complete: status=#{order.status}"
         sleep 2
       end
+    end
+
+    # @return String
+    def pem_chain
+      url = order.certificate_url or raise NotCompleted, "not completed yet"
+      CertificateRetrievingService.new(acme, common_name, url, chain_preferences: chain_preferences).pem_chain
     end
 
     def certificate

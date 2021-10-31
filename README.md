@@ -151,6 +151,30 @@ are configurable per certificate's common-name.
 - Shell script: [shell](./docs/post_issuing_hooks/shell.md)
 - Amazon Certificate Manager (ACM): [acm](./docs/post_issuing_hooks/acm.md)
 
+### Chain preference
+
+If you want to prefer an alternative chain given by CA ([RFC8555 Section 7.4.2.](https://datatracker.ietf.org/doc/html/rfc8555#section-7.4.2)), use the following configuration. Preference may be delcared with common name.
+
+When chain preferences are configured for the common name of an ordered certificate, Acmesmith will retrieve all available alternative chains and evaluate rules in an configured order. The first chain matched to a rule will be used and saved to a storage.
+
+During rule evaluation, a root issuer name and key id are taken from the last available intermediate (Issuer and AKI) provided in a chain, when a chain doesn't have a root certificate (trust anchor).
+
+```yaml
+chain_preferences:
+  - root_issuer_name: "ISRG Root X1"
+    ### Optionally, you may specify CA SKI/AKI:
+    # root_issuer_key_id: "79:b4:59:e6:7b:b6:e5:e4:01:73:80:08:88:c8:1a:58:f6:e9:9b:6e"
+
+    ### Filter by common name (optional)
+    filter:
+      exact:
+        - my-app.example.com
+      suffix:
+        - .example.org
+      regexp:
+        - '\Aapp\d+.example.org\z'
+```
+
 ## Vendor dependent notes
 
 - [./docs/vendor/aws.md](./docs/vendor/aws.md): IAM and KMS key policies, and some tips
