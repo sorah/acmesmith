@@ -58,7 +58,7 @@ GEM
     jmespath (1.4.0)
     mini_portile2 (2.8.0)
     multipart-post (2.1.1)
-    nokogiri (1.13.3)
+    nokogiri (1.13.6)
       mini_portile2 (~> 2.8.0)
       racc (~> 1.4)
     racc (1.6.0)
