@@ -55,7 +55,7 @@ GEM
     faraday-net_http_persistent (1.2.0)
     faraday-patron (1.0.0)
     faraday-rack (1.0.0)
-    jmespath (1.4.0)
+    jmespath (1.6.1)
     mini_portile2 (2.8.0)
     multipart-post (2.1.1)
     nokogiri (1.13.3)
