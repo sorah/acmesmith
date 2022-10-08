@@ -17,7 +17,7 @@ module Acmesmith
         true
       end
 
-      def initialize(aws_access_key: nil, assume_role: nil, hosted_zone_map: {}, restore_to_original_records: false)
+      def initialize(aws_access_key: nil, assume_role: nil, hosted_zone_map: {}, restore_to_original_records: false, substitution_map: {})
         aws_options = {region: 'us-east-1'}.tap do |opt| 
           opt[:credentials] = Aws::Credentials.new(aws_access_key['access_key_id'], aws_access_key['secret_access_key'], aws_access_key['session_token']) if aws_access_key
         end
@@ -37,9 +37,13 @@ module Acmesmith
 
         @restore_to_original_records = restore_to_original_records
         @original_records = {}
+
+        @substitution_map = substitution_map.map { |k,v| [canonical_fqdn(k), v] }.to_h
       end
 
       def respond_all(*domain_and_challenges)
+        domain_and_challenges = apply_substitution_for_domain_and_challenges(domain_and_challenges)
+
         save_original_records(*domain_and_challenges) if @restore_to_original_records
 
         challenges_by_hosted_zone = domain_and_challenges.group_by { |(domain, _)| find_hosted_zone(domain) }
@@ -60,6 +64,8 @@ module Acmesmith
       end
 
       def cleanup_all(*domain_and_challenges)
+        domain_and_challenges = apply_substitution_for_domain_and_challenges(domain_and_challenges)
+
         challenges_by_hosted_zone = domain_and_challenges.group_by { |(domain, _)| find_hosted_zone(domain) }
 
         zone_and_batches = challenges_by_hosted_zone.map do |zone_id, dcs|
@@ -262,6 +268,10 @@ module Acmesmith
               .map {  |zone| [zone.name, zone.id] }
           end.group_by(&:first).map { |domain, kvs| [domain, kvs.map(&:last)] }.to_h.merge(hosted_zone_map)
         end
+      end
+
+      def apply_substitution_for_domain_and_challenges(domain_and_challenges)
+        domain_and_challenges.map { |(domain, challenge)| [@substitution_map.fetch(canonical_fqdn(domain), domain), challenge] }
       end
 
       def list_existing_rrsets(hosted_zone_id, name)

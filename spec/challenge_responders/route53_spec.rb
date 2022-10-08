@@ -14,6 +14,7 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
   let(:assume_role) { nil }
   let(:hosted_zone_map) { {} }
   let(:restore_to_original_records) { false }
+  let(:substitution_map) { {} }
 
   let(:r53) { double(:route53) }
 
@@ -23,6 +24,7 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
       assume_role: assume_role,
       hosted_zone_map: hosted_zone_map,
       restore_to_original_records: restore_to_original_records,
+      substitution_map: substitution_map,
     )
   end
 
@@ -115,7 +117,7 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
 
     let(:list_hosted_zones) do
       [
-        *%w(example.com corp.example.com).map do |_|
+        *%w(example.com corp.example.com example.org).map do |_|
           Aws::Route53::Types::HostedZone.new(name: "#{_}.", id: "/hostedzone/#{_}", config: Aws::Route53::Types::HostedZoneConfig.new(private_zone: false))
         end,
         Aws::Route53::Types::HostedZone.new(name: "example.net.", id: "/hostedzone/example.net-true", config: Aws::Route53::Types::HostedZoneConfig.new(private_zone: false)),
@@ -494,6 +496,59 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
         roundtrip
       end
     end
+
+    context "when substitution_map is set" do
+      let(:substitution_map) { {"akane.example.com." => "_akane.example.org"} }
+      let(:domain_and_challenges) do
+        [
+          ['akane.example.com', double_challenge],
+          ['yaeka.example.com', double_challenge],
+        ]
+      end
+
+      subject(:roundtrip) {
+        responder.respond_all(*domain_and_challenges) 
+        responder.cleanup_all(*domain_and_challenges) 
+      }
+
+      before do
+        expect_change_rrset(
+          hosted_zone_id: '/hostedzone/example.org',
+          comment: 'ACME challenge response ',
+          changes: [
+            change_object(action: 'UPSERT', name: "_akane.example.org", challenge: domain_and_challenges[0][1]),
+          ],
+        )
+        expect_change_rrset(
+          hosted_zone_id: '/hostedzone/example.com',
+          comment: 'ACME challenge response ',
+          changes: [
+            change_object(action: 'UPSERT', name: domain_and_challenges[1][0], challenge: domain_and_challenges[1][1]),
+          ],
+        )
+        expect_change_rrset(
+          hosted_zone_id: '/hostedzone/example.org',
+          comment: 'ACME challenge response (cleanup)',
+          changes: [
+            change_object(action: 'DELETE', name: "_akane.example.org", challenge: domain_and_challenges[0][1]),
+          ],
+          wait: false,
+        )
+        expect_change_rrset(
+          hosted_zone_id: '/hostedzone/example.com',
+          comment: 'ACME challenge response (cleanup)',
+          changes: [
+            change_object(action: 'DELETE', name: domain_and_challenges[1][0], challenge: domain_and_challenges[1][1]),
+          ],
+          wait: false,
+        )
+      end
+
+      it "uses another name for rrset" do
+        roundtrip
+      end
+    end
+
   end
 
 
