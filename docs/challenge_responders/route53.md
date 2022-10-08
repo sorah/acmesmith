@@ -24,7 +24,16 @@ challenge_responders:
 
       # Restore to original records on cleanup (after domain authorization). Default to false.
       # Useful when you need to keep existing record as long as possible.
-      restore_to_original_records: true
+      restore_to_original_records: false
+
+      ### Substitution record names map (optional)
+      ## This specifies alias for specific _acme-challenge record. For instance the following example
+      ## updates _acme-challenge.test-example-com.example.org instead of _acme-challenge.test.example.com.
+      ##
+      ## This eases using the route53 responder for domains not managed in route53, by registering CNAME record to
+      ## the alias record name on the original record name in advance. This is called delegation.
+      substitution_map:
+        "test.example.com.": "test-example-com.example.org."
 ```
 
 ## IAM Policy
