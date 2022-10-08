@@ -1,3 +1,11 @@
+## v2.5.0 (2020-10-09)
+
+### Enhancement
+
+- Gains `chain_preferences` configuration to choose alternate chain. [#47](https://github.com/sorah/acmesmith/pull/47)
+- route53: Gains `substitution_map` to allow delegation of `_acme-challenge` via predefined CNAME record. [#53](https://github.com/sorah/acmesmith/pull/53)
+- s3: Gains `endpoint` option. [#52](https://github.com/sorah/acmesmith/pull/52)
+
 ## v2.4.0 (2020-12-03)
 
 ### Enhancement
