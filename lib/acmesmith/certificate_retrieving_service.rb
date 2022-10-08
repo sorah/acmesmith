@@ -71,11 +71,11 @@ module Acmesmith
 
         if key_id
           top_key_id = if has_root
-            top.extensions.find { |e| e.oid == 'subjectKeyIdentifier' }.value
+            top.extensions.find { |e| e.oid == 'subjectKeyIdentifier' }.value_der[2..1]
           else
-            top.extensions.find { |e| e.oid == 'authorityKeyIdentifier' }.value&.each_line&.grep(/^keyid:/)&.first&.yield_self { |v| v[6..-1] }&.chomp
-          end
-          return false unless key_id.downcase == top_key_id.downcase
+            top.extensions.find { |e| e.oid == 'authorityKeyIdentifier' }.value_der[4,20]
+          end.unpack1('H*').downcase
+          return false unless key_id.downcase.gsub(/:/,'') == top_key_id
         end
 
         true
@@ -97,10 +97,17 @@ module Acmesmith
       private def find_issuer(cert)
         return nil if cert.issuer == cert.subject
 
-        aki = cert.extensions.find { |e| e.oid == 'authorityKeyIdentifier' }.value&.each_line&.grep(/^keyid:/)&.first&.yield_self { |v| v[6..-1] }&.chomp
+        # https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.1
+        # sequence(\x30\x16) context-specific(\x80\x14) + keyid
+        aki =  cert.extensions.find { |e| e.oid == 'authorityKeyIdentifier' }.value_der
+
+        # compare using SKI as a AKI DER. this doesn't support AKI using other than keyid but it should be okay
         certificates.find do |c|
-          ski = c.extensions.find { |e| e.oid == 'subjectKeyIdentifier' }.value
-          ski == aki && cert.issuer == c.subject
+          ski_der = c.extensions.find { |e| e.oid == 'subjectKeyIdentifier' }.value_der
+          hdr = "\x30\x16\x80\x14".b
+          keyid = ski_der[2..-1]
+
+          "#{hdr}#{keyid}" == aki && cert.issuer == c.subject
         end
       end
     end
