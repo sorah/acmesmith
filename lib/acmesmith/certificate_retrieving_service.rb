@@ -71,10 +71,10 @@ module Acmesmith
 
         if key_id
           top_key_id = if has_root
-            top.extensions.find { |e| e.oid == 'subjectKeyIdentifier' }.value_der[2..1]
+            value_der(top.extensions.find { |e| e.oid == 'subjectKeyIdentifier' })&.slice(2..-1)
           else
-            top.extensions.find { |e| e.oid == 'authorityKeyIdentifier' }.value_der[4,20]
-          end.unpack1('H*').downcase
+            value_der(top.extensions.find { |e| e.oid == 'authorityKeyIdentifier' })&.slice(4,20)
+          end&.unpack1('H*')&.downcase
           return false unless key_id.downcase.gsub(/:/,'') == top_key_id
         end
 
@@ -99,16 +99,22 @@ module Acmesmith
 
         # https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.1
         # sequence(\x30\x16) context-specific(\x80\x14) + keyid
-        aki =  cert.extensions.find { |e| e.oid == 'authorityKeyIdentifier' }.value_der
+        aki = value_der(cert.extensions.find { |e| e.oid == 'authorityKeyIdentifier' })
 
         # compare using SKI as a AKI DER. this doesn't support AKI using other than keyid but it should be okay
         certificates.find do |c|
-          ski_der = c.extensions.find { |e| e.oid == 'subjectKeyIdentifier' }.value_der
+          ski_der = value_der(c.extensions.find { |e| e.oid == 'subjectKeyIdentifier' })
+          next unless ski_der
           hdr = "\x30\x16\x80\x14".b
           keyid = ski_der[2..-1]
 
           "#{hdr}#{keyid}" == aki && cert.issuer == c.subject
         end
+      end
+
+      private def value_der(ext)
+        return nil unless ext
+        ext.respond_to?(:value_der) ? ext.value_der : ext.to_der[9..-1]
       end
     end
 
