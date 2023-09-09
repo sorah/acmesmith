@@ -8,20 +8,22 @@ module Acmesmith
 
     # @param acme [Acme::Client] ACME client
     # @param identifiers [Array<String>] Array of domain names for a ordering certificate. The first item will be a common name.
+    # @param private_key [OpenSSL::PKey::PKey] Private key
     # @param challenge_responder_rules [Array<Acmesmith::Config::ChallengeResponderRule>] responders
     # @param chain_preferences [Array<Acmesmith::Config::ChainPreference>] chain_preferences
     # @param not_before [Time]
     # @param not_after [Time]
-    def initialize(acme:, identifiers:, challenge_responder_rules:, chain_preferences:, not_before: nil, not_after: nil)
+    def initialize(acme:, identifiers:, private_key:, challenge_responder_rules:, chain_preferences:, not_before: nil, not_after: nil)
       @acme = acme
       @identifiers = identifiers
+      @private_key = private_key
       @challenge_responder_rules = challenge_responder_rules
       @chain_preferences = chain_preferences
       @not_before = not_before
       @not_after = not_after
     end
 
-    attr_reader :acme, :identifiers, :challenge_responder_rules, :chain_preferences, :not_before, :not_after
+    attr_reader :acme, :identifiers, :private_key, :challenge_responder_rules, :chain_preferences, :not_before, :not_after
 
     def perform!
       puts "=> Ordering a certificate for the following identifiers:"
@@ -107,7 +109,7 @@ module Acmesmith
 
     # @return [Acme::Client::CertificateRequest]
     def csr
-      @csr ||= Acme::Client::CertificateRequest.new(subject: { common_name: common_name }, names: sans)
+      @csr ||= Acme::Client::CertificateRequest.new(subject: { common_name: common_name }, names: sans, private_key: private_key)
     end
   end
 end

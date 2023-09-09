@@ -113,6 +113,11 @@ module Acmesmith
       raise PassphraseRequired, 'key_passphrase required'
     end
 
+    # @return [OpenSSL::PKey::PKey]
+    def public_key
+      @certificate.public_key
+    end
+
     # @return [String] leaf certificate + full certificate chain
     def fullchain
       "#{certificate.to_pem}\n#{issuer_pems}".gsub(/\n+/,?\n)
