@@ -4,3 +4,4 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'nokogiri'
+gem 'acme-client', git: 'https://github.com/sorah/acme-client', ref: 'get-nonce-options' # https://github.com/unixcharles/acme-client/pull/230
