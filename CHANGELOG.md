@@ -1,3 +1,10 @@
+## v2.6.0 (2023-10-05)
+
+### Enhancement
+
+- order: Gains `--key-type`, `--rsa-key-size`, `--elliptic-curve` options to customize private key generation, and generating EC keys. [#58](https://github.com/sorah/acmesmith/pull/58)
+- autorenew: Respect the existing key configuration when regenerating a fresh key pair for renewal.  [#58](https://github.com/sorah/acmesmith/pull/58)
+
 ## v2.5.0 (2020-10-09)
 
 ### Enhancement
