@@ -104,9 +104,9 @@ RSpec.describe "Integration with Pebble", integration_pebble: true do
     end
   end
 
-  context "ECDSA key" do
+  context "EC key" do
     it "works" do
-      system(*cmd("order", "ecdsa.invalid", "--key-type", "ecdsa", "--elliptic-curve", "prime256v1"), exception: true)
+      system(*cmd("order", "ecdsa.invalid", "--key-type", "ec", "--elliptic-curve", "prime256v1"), exception: true)
 
       certificate = OpenSSL::X509::Certificate.new(IO.popen(cmd("show-certificate", "--type=certificate", "ecdsa.invalid")))
       expect(certificate.public_key.group.curve_name).to eq "prime256v1"

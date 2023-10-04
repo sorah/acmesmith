@@ -208,14 +208,14 @@ module Acmesmith
       case key_type
       when 'rsa'
         OpenSSL::PKey::RSA.generate(rsa_key_size)
-      when 'ecdsa'
+      when 'ec'
         OpenSSL::PKey::EC.generate(elliptic_curve)
       else
         raise ArgumentError, "Key type #{key_type} is not supported"
       end
     end
 
-    # Generate a new key pair with the same algorithm and key size as existing one
+    # Generate a new key pair with the same type and key size / curve as existing one
     def regenerate_private_key(template)
       case template
       when OpenSSL::PKey::RSA

@@ -32,9 +32,9 @@ module Acmesmith
 
     desc "order COMMON_NAME [SAN]", "order certificate for CN +COMMON_NAME+ with SANs +SAN+"
     method_option :show_certificate, type: :boolean, aliases: %w(-s), default: true, desc: 'show an issued certificate in PEM and text when exiting'
-    method_option :key_type, type: :string, enum: %w(rsa ecdsa), default: 'rsa', desc: 'key algorithm'
+    method_option :key_type, type: :string, enum: %w(rsa ec), default: 'rsa', desc: 'key type'
     method_option :rsa_key_size, type: :numeric, default: 2048, desc: 'size of RSA key'
-    method_option :elliptic_curve, type: :string, default: 'prime256v1', desc: 'elliptic curve group for ECDSA key'
+    method_option :elliptic_curve, type: :string, default: 'prime256v1', desc: 'elliptic curve group for EC key'
     def order(common_name, *sans)
       cert = client.order(
         common_name, *sans,
