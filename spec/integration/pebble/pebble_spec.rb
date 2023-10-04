@@ -104,6 +104,34 @@ RSpec.describe "Integration with Pebble", integration_pebble: true do
     end
   end
 
+  context "EC key" do
+    it "works" do
+      system(*cmd("order", "ecdsa.invalid", "--key-type", "ec", "--elliptic-curve", "prime256v1"), exception: true)
+
+      certificate = OpenSSL::X509::Certificate.new(IO.popen(cmd("show-certificate", "--type=certificate", "ecdsa.invalid")))
+      expect(certificate.public_key.group.curve_name).to eq "prime256v1"
+
+      system(*cmd("add-san", "ecdsa.invalid", "san.invalid"), exception: true)
+
+      certificate = OpenSSL::X509::Certificate.new(IO.popen(cmd("show-certificate", "--type=certificate", "ecdsa.invalid")))
+      expect(certificate.public_key.group.curve_name).to eq "prime256v1"  # new cert has the same curve
+    end
+  end
+
+  context "RSA3072 key" do
+    it "works" do
+      system(*cmd("order", "rsa3072.invalid", "--key-type", "rsa", "--rsa-key-size", "3072"), exception: true)
+
+      certificate = OpenSSL::X509::Certificate.new(IO.popen(cmd("show-certificate", "--type=certificate", "rsa3072.invalid")))
+      expect(certificate.public_key.n.num_bits).to eq 3072
+
+      system(*cmd("add-san", "rsa3072.invalid", "san.invalid"), exception: true)
+
+      certificate = OpenSSL::X509::Certificate.new(IO.popen(cmd("show-certificate", "--type=certificate", "rsa3072.invalid")))
+      expect(certificate.public_key.n.num_bits).to eq 3072  # new cert has the same key length
+    end
+  end
+
   context "post_issue_hooks" do
     it "works" do
       system(*cmd("order", "flag.invalid"), exception: true)

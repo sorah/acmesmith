@@ -21,27 +21,9 @@ module Acmesmith
       key
     end
 
-    def order(*identifiers, not_before: nil, not_after: nil)
-      order = OrderingService.new(
-        acme: acme,
-        identifiers: identifiers,
-        challenge_responder_rules: config.challenge_responders,
-        chain_preferences: config.chain_preferences,
-        not_before: not_before,
-        not_after: not_after
-      )
-      order.perform!
-      cert = order.certificate
-
-      puts
-      print " * securing into the storage ..."
-      storage.put_certificate(cert, certificate_key_passphrase)
-      puts " [ ok ]"
-      puts
-
-      execute_post_issue_hooks(cert)
-
-      cert
+    def order(*identifiers, key_type: 'rsa', rsa_key_size: 2048, elliptic_curve: 'prime256v1', not_before: nil, not_after: nil)
+      private_key = generate_private_key(key_type: key_type, rsa_key_size: rsa_key_size, elliptic_curve: elliptic_curve)
+      order_with_private_key(*identifiers, private_key: private_key, not_before: not_before, not_after: not_after)
     end
 
     def authorize(*identifiers)
@@ -149,7 +131,7 @@ module Acmesmith
         puts "   Not valid after: #{not_after}"
         next unless (cert.certificate.not_after.utc - Time.now.utc) < (days.to_i * 86400)
         puts " * Renewing: CN=#{cert.common_name}, SANs=#{cert.sans.join(',')}"
-        order(cert.common_name, *cert.sans)
+        order_with_private_key(cert.common_name, *cert.sans, private_key: regenerate_private_key(cert.public_key))
       end
     end
 
@@ -158,7 +140,7 @@ module Acmesmith
       cert = storage.get_certificate(common_name)
       sans = cert.sans + add_sans
       puts " * SANs will be: #{sans.join(?,)}"
-      order(cert.common_name, *sans)
+      order_with_private_key(cert.common_name, *sans, private_key: regenerate_private_key(cert.public_key))
     end
 
     private
@@ -195,6 +177,53 @@ module Acmesmith
         ENV['ACMESMITH_ACCOUNT_KEY_PASSPHRASE'] || config['account_key_passphrase']
       else
         config['account_key_passphrase']
+      end
+    end
+
+    def order_with_private_key(*identifiers, private_key:, not_before: nil, not_after: nil)
+      order = OrderingService.new(
+        acme: acme,
+        identifiers: identifiers,
+        private_key: private_key,
+        challenge_responder_rules: config.challenge_responders,
+        chain_preferences: config.chain_preferences,
+        not_before: not_before,
+        not_after: not_after
+      )
+      order.perform!
+      cert = order.certificate
+
+      puts
+      print " * securing into the storage ..."
+      storage.put_certificate(cert, certificate_key_passphrase)
+      puts " [ ok ]"
+      puts
+
+      execute_post_issue_hooks(cert)
+
+      cert
+    end
+
+    def generate_private_key(key_type:, rsa_key_size:, elliptic_curve:)
+      case key_type
+      when 'rsa'
+        OpenSSL::PKey::RSA.generate(rsa_key_size)
+      when 'ec'
+        OpenSSL::PKey::EC.generate(elliptic_curve)
+      else
+        raise ArgumentError, "Key type #{key_type} is not supported"
+      end
+    end
+
+    # Generate a new key pair with the same type and key size / curve as existing one
+    def regenerate_private_key(template)
+      case template
+      when OpenSSL::PKey::RSA
+        OpenSSL::PKey::RSA.generate(template.n.num_bits)
+      when OpenSSL::PKey::EC
+        OpenSSL::PKey::EC.generate(template.group)
+      else
+        raise ArgumentError, "Unknown key type: #{template.class}"
       end
     end
   end
