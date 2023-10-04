@@ -25,7 +25,7 @@ module Acmesmith
 
     # @param certificate [OpenSSL::X509::Certificate, String]
     # @param chain [String, Array<String>, Array<OpenSSL::X509::Certificate>]
-    # @param private_key [String, OpenSSL::PKey::RSA]
+    # @param private_key [String, OpenSSL::PKey::PKey]
     # @param key_passphrase [String, nil]
     # @param csr [String, OpenSSL::X509::Request, nil]
     def initialize(certificate, chain, private_key, key_passphrase = nil, csr = nil)
@@ -66,15 +66,15 @@ module Acmesmith
           self.key_passphrase = key_passphrase
         else
           begin
-            @private_key = OpenSSL::PKey::RSA.new(@raw_private_key) { nil }
-          rescue OpenSSL::PKey::RSAError
+            @private_key = OpenSSL::PKey.read(@raw_private_key) { nil }
+          rescue OpenSSL::PKey::PKeyError
             # may be encrypted
           end
         end
-      when OpenSSL::PKey::RSA
+      when OpenSSL::PKey::PKey
         @private_key = private_key
       else
-        raise TypeError, 'private_key is expected to be a String or OpenSSL::PKey::RSA'
+        raise TypeError, 'private_key is expected to be a String or OpenSSL::PKey::PKey'
       end
 
       @csr = case csr
@@ -100,13 +100,13 @@ module Acmesmith
     def key_passphrase=(pw)
       raise PrivateKeyDecrypted, 'private_key already given' if @private_key
 
-      @private_key = OpenSSL::PKey::RSA.new(@raw_private_key, pw)
+      @private_key = OpenSSL::PKey.read(@raw_private_key, pw)
 
       @raw_private_key = nil
       nil
     end
 
-    # @return [OpenSSL::PKey::RSA]
+    # @return [OpenSSL::PKey::PKey]
     # @raise [PassphraseRequired] if private_key is not yet decrypted
     def private_key
       return @private_key if @private_key
