@@ -32,7 +32,7 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
   describe ".new" do
     context "with no parameters" do
       before do
-        expect(Aws::Route53::Client).to receive(:new).with(region: 'us-east-1').and_return(r53)
+        expect(Aws::Route53::Client).to receive(:new).with({region: 'us-east-1'}).and_return(r53)
       end
 
       it "uses SDK default" do
@@ -46,10 +46,10 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
       before do
         akia = double(:akia)
         allow(Aws::Credentials).to receive(:new).with('a', 'b', 'c').and_return(akia)
-        expect(Aws::Route53::Client).to receive(:new).with(
+        expect(Aws::Route53::Client).to receive(:new).with({
           region: 'us-east-1',
           credentials: akia,
-        ).and_return(r53)
+        }).and_return(r53)
       end
 
       it "uses credentials" do
@@ -62,19 +62,19 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
       before do
 
         sts = double(:sts)
-        allow(Aws::STS::Client).to receive(:new).with(region: 'us-east-1').and_return(sts)
+        allow(Aws::STS::Client).to receive(:new).with({region: 'us-east-1'}).and_return(sts)
         cred = double(:cred)
-        expect(Aws::AssumeRoleCredentials).to receive(:new).with(
+        expect(Aws::AssumeRoleCredentials).to receive(:new).with({
             client: sts,
             role_arn: 'arn:aws:iam:',
             external_id: 'external_id',
             role_session_name: 'session',
-        ).and_return(cred)
+        }).and_return(cred)
 
-        expect(Aws::Route53::Client).to receive(:new).with(
+        expect(Aws::Route53::Client).to receive(:new).with({
           region: 'us-east-1',
           credentials: cred,
-        ).and_return(r53)
+        }).and_return(r53)
       end
 
       it "uses credentials" do
@@ -89,19 +89,19 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
         akia = double(:akia)
         allow(Aws::Credentials).to receive(:new).with('a', 'b', 'c').and_return(akia)
         sts = double(:sts)
-        allow(Aws::STS::Client).to receive(:new).with(region: 'us-east-1', credentials: akia).and_return(sts)
+        allow(Aws::STS::Client).to receive(:new).with({region: 'us-east-1', credentials: akia}).and_return(sts)
         cred = double(:cred)
-        expect(Aws::AssumeRoleCredentials).to receive(:new).with(
+        expect(Aws::AssumeRoleCredentials).to receive(:new).with({
             client: sts,
             role_arn: 'arn:aws:iam:',
             external_id: 'external_id',
             role_session_name: 'session',
-        ).and_return(cred)
+        }).and_return(cred)
 
-        expect(Aws::Route53::Client).to receive(:new).with(
+        expect(Aws::Route53::Client).to receive(:new).with({
           region: 'us-east-1',
           credentials: cred,
-        ).and_return(r53)
+        }).and_return(r53)
       end
 
       it "uses credentials" do
@@ -112,7 +112,7 @@ RSpec.describe Acmesmith::ChallengeResponders::Route53 do
 
   context do
     before do
-      expect(Aws::Route53::Client).to receive(:new).with(region: 'us-east-1').and_return(r53)
+      expect(Aws::Route53::Client).to receive(:new).with({region: 'us-east-1'}).and_return(r53)
     end
 
     let(:list_hosted_zones) do

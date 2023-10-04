@@ -37,7 +37,7 @@ RSpec.describe Acmesmith::Storages::S3 do
   describe ".new" do
     context "with no parameters" do
       before do
-        expect(Aws::S3::Client).to receive(:new).with(region: 'dummy').and_return(s3)
+        expect(Aws::S3::Client).to receive(:new).with({region: 'dummy'}).and_return(s3)
       end
 
       it "uses SDK default" do
@@ -51,10 +51,10 @@ RSpec.describe Acmesmith::Storages::S3 do
       before do
         akia = double(:akia)
         allow(Aws::Credentials).to receive(:new).with('a', 'b', 'c').and_return(akia)
-        expect(Aws::S3::Client).to receive(:new).with(
+        expect(Aws::S3::Client).to receive(:new).with({
           region: 'dummy',
           credentials: akia,
-        ).and_return(s3)
+        }).and_return(s3)
       end
 
       it "uses credentials" do
@@ -65,7 +65,7 @@ RSpec.describe Acmesmith::Storages::S3 do
 
   context do
     before do
-      expect(Aws::S3::Client).to receive(:new).with(region: 'dummy').and_return(s3)
+      expect(Aws::S3::Client).to receive(:new).with({region: 'dummy'}).and_return(s3)
     end
 
     describe "#get_account_key" do
@@ -74,7 +74,7 @@ RSpec.describe Acmesmith::Storages::S3 do
       context "when exists" do
         before do
           expect(s3).to receive(:get_object)
-            .with(bucket: 'bucket', key: 'prefix/account.pem')
+            .with({bucket: 'bucket', key: 'prefix/account.pem'})
             .and_return(double(:obj, body: StringIO.new(PRIVATE_KEY_PEM)))
         end
 
@@ -106,7 +106,7 @@ RSpec.describe Acmesmith::Storages::S3 do
 
         before do
           expect(s3).to receive(:get_object)
-            .with(bucket: 'bucket', key: 'prefix/account.pem')
+            .with({bucket: 'bucket', key: 'prefix/account.pem'})
             .and_raise(Aws::S3::Errors::NoSuchKey.new('',''))
 
           expect(account_key).to receive(:export).with(PASSPHRASE).and_return(PRIVATE_KEY_PEM_ENCRYPTED)
@@ -158,7 +158,7 @@ RSpec.describe Acmesmith::Storages::S3 do
       context "when key exists" do
         before do
           expect(s3).to receive(:get_object)
-            .with(bucket: 'bucket', key: 'prefix/account.pem')
+            .with({bucket: 'bucket', key: 'prefix/account.pem'})
             .and_return(double(:obj, body: StringIO.new(PRIVATE_KEY_PEM)))
         end
 
@@ -177,13 +177,13 @@ RSpec.describe Acmesmith::Storages::S3 do
       context "when certificate exists" do
         before do
           expect(s3).to receive(:get_object)
-            .with(bucket: 'bucket', key: "prefix/certs/common-name/#{version}/cert.pem")
+            .with({bucket: 'bucket', key: "prefix/certs/common-name/#{version}/cert.pem"})
             .and_return(double(:obj, body: StringIO.new(PEM_LEAF)))
           expect(s3).to receive(:get_object)
-            .with(bucket: 'bucket', key: "prefix/certs/common-name/#{version}/key.pem")
+            .with({bucket: 'bucket', key: "prefix/certs/common-name/#{version}/key.pem"})
             .and_return(double(:obj, body: StringIO.new(PRIVATE_KEY_PEM)))
           expect(s3).to receive(:get_object)
-            .with(bucket: 'bucket', key: "prefix/certs/common-name/#{version}/chain.pem")
+            .with({bucket: 'bucket', key: "prefix/certs/common-name/#{version}/chain.pem"})
             .and_return(double(:obj, body: StringIO.new(PEM_CHAIN)))
         end
 
@@ -199,7 +199,7 @@ RSpec.describe Acmesmith::Storages::S3 do
 
           before do
             expect(s3).to receive(:get_object)
-              .with(bucket: 'bucket', key: "prefix/certs/common-name/current")
+              .with({bucket: 'bucket', key: "prefix/certs/common-name/current"})
               .and_return(double(:obj, body: StringIO.new(version)))
           end
 
@@ -215,7 +215,7 @@ RSpec.describe Acmesmith::Storages::S3 do
       context "when ceritificate not exists" do
         before do
           expect(s3).to receive(:get_object)
-            .with(bucket: 'bucket', key: 'prefix/certs/common-name/version/cert.pem')
+            .with({bucket: 'bucket', key: 'prefix/certs/common-name/version/cert.pem'})
             .and_raise(Aws::S3::Errors::NoSuchKey.new('',''))
         end
 
@@ -229,7 +229,7 @@ RSpec.describe Acmesmith::Storages::S3 do
 
         before do
           expect(s3).to receive(:get_object)
-            .with(bucket: 'bucket', key: 'prefix/certs/common-name/current')
+            .with({bucket: 'bucket', key: 'prefix/certs/common-name/current'})
             .and_raise(Aws::S3::Errors::NoSuchKey.new('',''))
         end
 
@@ -255,13 +255,13 @@ RSpec.describe Acmesmith::Storages::S3 do
         allow(certificate).to receive(:pkcs12).with('pkcs12').and_return(double(:pkcs12, to_der: "pkcs12-der"))
 
         expect(s3).to receive(:put_object)
-          .with(bucket: 'bucket', key: 'prefix/certs/common-name/version/cert.pem', body: "certificate\n", content_type: 'application/x-pem-file')
+          .with({bucket: 'bucket', key: 'prefix/certs/common-name/version/cert.pem', body: "certificate\n", content_type: 'application/x-pem-file'})
           .and_return(nil)
         expect(s3).to receive(:put_object)
-          .with(bucket: 'bucket', key: 'prefix/certs/common-name/version/chain.pem', body: "chain\n", content_type: 'application/x-pem-file')
+          .with({bucket: 'bucket', key: 'prefix/certs/common-name/version/chain.pem', body: "chain\n", content_type: 'application/x-pem-file'})
           .and_return(nil)
         expect(s3).to receive(:put_object)
-          .with(bucket: 'bucket', key: 'prefix/certs/common-name/version/fullchain.pem', body: "fullchain\n", content_type: 'application/x-pem-file')
+          .with({bucket: 'bucket', key: 'prefix/certs/common-name/version/fullchain.pem', body: "fullchain\n", content_type: 'application/x-pem-file'})
           .and_return(nil)
 
         kms_options = use_kms ? {server_side_encryption: 'aws:kms'} : {}
@@ -287,7 +287,7 @@ RSpec.describe Acmesmith::Storages::S3 do
 
         before do
           expect(s3).to receive(:put_object)
-            .with(bucket: 'bucket', key: 'prefix/certs/common-name/current', body: 'version', content_type: 'text/plain')
+            .with({bucket: 'bucket', key: 'prefix/certs/common-name/current', body: 'version', content_type: 'text/plain'})
             .and_return(nil)
         end
 
@@ -302,7 +302,7 @@ RSpec.describe Acmesmith::Storages::S3 do
         context "without pkcs12_common_names" do
           before do
             expect(s3).to receive(:put_object)
-              .with(bucket: 'bucket', key: 'prefix/certs/common-name/version/cert.p12', body: "pkcs12-der\n", content_type: 'application/x-pkcs12')
+              .with({bucket: 'bucket', key: 'prefix/certs/common-name/version/cert.p12', body: "pkcs12-der\n", content_type: 'application/x-pkcs12'})
               .and_return(nil)
           end
 
@@ -316,7 +316,7 @@ RSpec.describe Acmesmith::Storages::S3 do
 
           before do
             expect(s3).to receive(:put_object)
-              .with(bucket: 'bucket', key: 'prefix/certs/common-name/version/cert.p12', body: "pkcs12-der\n", content_type: 'application/x-pkcs12')
+              .with({bucket: 'bucket', key: 'prefix/certs/common-name/version/cert.p12', body: "pkcs12-der\n", content_type: 'application/x-pkcs12'})
               .and_return(nil)
           end
 
@@ -346,10 +346,10 @@ RSpec.describe Acmesmith::Storages::S3 do
 
           before do
             expect(s3).to receive(:put_object)
-              .with(
+              .with({
                 bucket: 'bucket', key: 'prefix/certs/common-name/version/cert.p12', body: "pkcs12-der\n", content_type: 'application/x-pkcs12',
                 server_side_encryption: 'aws:kms',
-              )
+              })
               .and_return(nil)
           end
 
@@ -384,7 +384,7 @@ RSpec.describe Acmesmith::Storages::S3 do
       context "when current exists" do
         before do
           expect(s3).to receive(:get_object)
-            .with(bucket: 'bucket', key: "prefix/certs/common-name/current")
+            .with({bucket: 'bucket', key: "prefix/certs/common-name/current"})
             .and_return(double(:obj, body: StringIO.new('version')))
         end
 
@@ -396,7 +396,7 @@ RSpec.describe Acmesmith::Storages::S3 do
       context "when current version not exists" do
         before do
           expect(s3).to receive(:get_object)
-            .with(bucket: 'bucket', key: 'prefix/certs/common-name/current')
+            .with({bucket: 'bucket', key: 'prefix/certs/common-name/current'})
             .and_raise(Aws::S3::Errors::NoSuchKey.new('',''))
         end
 
@@ -409,7 +409,7 @@ RSpec.describe Acmesmith::Storages::S3 do
     describe "#list_certificates" do
       subject(:list) { storage.list_certificates() }
       before do
-        expect(s3).to receive(:list_objects).with(bucket: 'bucket', delimiter: '/', prefix: 'prefix/certs/')
+        expect(s3).to receive(:list_objects).with({bucket: 'bucket', delimiter: '/', prefix: 'prefix/certs/'})
           .and_return([Aws::S3::Types::ListObjectsOutput.new(
             common_prefixes: %w(
               prefix/certs/cert-a/
@@ -427,7 +427,7 @@ RSpec.describe Acmesmith::Storages::S3 do
     describe "#list_certificate_versions" do
       subject(:list) { storage.list_certificate_versions('common-name') }
       before do
-        expect(s3).to receive(:list_objects).with(bucket: 'bucket', delimiter: '/', prefix: 'prefix/certs/common-name/')
+        expect(s3).to receive(:list_objects).with({bucket: 'bucket', delimiter: '/', prefix: 'prefix/certs/common-name/'})
           .and_return([Aws::S3::Types::ListObjectsOutput.new(
             common_prefixes: %w(
               prefix/certs/common-name/a/
