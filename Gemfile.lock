@@ -1,12 +1,3 @@
-GIT
-  remote: https://github.com/sorah/acme-client
-  revision: 914b9c4aee2c0d5123deb7c6448d6d203943b173
-  ref: get-nonce-options
-  specs:
-    acme-client (2.0.14)
-      faraday (>= 1.0, < 3.0.0)
-      faraday-retry (>= 1.0, < 3.0.0)
-
 PATH
   remote: .
   specs:
@@ -20,12 +11,15 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    acme-client (2.0.15)
+      faraday (>= 1.0, < 3.0.0)
+      faraday-retry (>= 1.0, < 3.0.0)
     aws-eventstream (1.2.0)
-    aws-partitions (1.832.0)
+    aws-partitions (1.855.0)
     aws-sdk-acm (1.62.0)
       aws-sdk-core (~> 3, >= 3.184.0)
       aws-sigv4 (~> 1.1)
-    aws-sdk-core (3.185.0)
+    aws-sdk-core (3.187.1)
       aws-eventstream (~> 1, >= 1.0.2)
       aws-partitions (~> 1, >= 1.651.0)
       aws-sigv4 (~> 1.5)
@@ -33,18 +27,18 @@ GEM
     aws-sdk-kms (1.72.0)
       aws-sdk-core (~> 3, >= 3.184.0)
       aws-sigv4 (~> 1.1)
-    aws-sdk-route53 (1.79.0)
+    aws-sdk-route53 (1.81.0)
       aws-sdk-core (~> 3, >= 3.184.0)
       aws-sigv4 (~> 1.1)
-    aws-sdk-s3 (1.136.0)
+    aws-sdk-s3 (1.138.0)
       aws-sdk-core (~> 3, >= 3.181.0)
       aws-sdk-kms (~> 1)
       aws-sigv4 (~> 1.6)
-    aws-sigv4 (1.6.0)
+    aws-sigv4 (1.6.1)
       aws-eventstream (~> 1, >= 1.0.2)
-    base64 (0.1.1)
+    base64 (0.2.0)
     diff-lcs (1.5.0)
-    faraday (2.7.11)
+    faraday (2.7.12)
       base64
       faraday-net_http (>= 2.0, < 3.1)
       ruby2_keywords (>= 0.0.4)
@@ -52,12 +46,12 @@ GEM
     faraday-retry (2.2.0)
       faraday (~> 2.0)
     jmespath (1.6.2)
-    mini_portile2 (2.8.4)
-    nokogiri (1.15.4)
+    mini_portile2 (2.8.5)
+    nokogiri (1.15.5)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
-    racc (1.7.1)
-    rake (13.0.6)
+    racc (1.7.3)
+    rake (13.1.0)
     rspec (3.12.0)
       rspec-core (~> 3.12.0)
       rspec-expectations (~> 3.12.0)
@@ -72,13 +66,12 @@ GEM
       rspec-support (~> 3.12.0)
     rspec-support (3.12.1)
     ruby2_keywords (0.0.5)
-    thor (1.2.2)
+    thor (1.3.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  acme-client!
   acmesmith!
   bundler
   nokogiri
@@ -86,4 +79,4 @@ DEPENDENCIES
   rspec
 
 BUNDLED WITH
-   2.4.18
+   2.4.12
