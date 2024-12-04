@@ -1,3 +1,9 @@
+## v2.6.1 (2024-12-05)
+
+### Fixes
+
+- route53: restore_to_original_records can have an error when querying existing record sets when it generates a name with leading empty labels (OTOH: double leading dots). [#65](https://github.com/sorah/acmesmith/pull/65)
+
 ## v2.6.0 (2023-10-05)
 
 ### Enhancement
