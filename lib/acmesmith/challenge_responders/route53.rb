@@ -89,7 +89,7 @@ module Acmesmith
         domain_and_challenges.each do |domain, challenge|
 
           hosted_zone_id = find_hosted_zone(domain)
-          name = "#{challenge.record_name}.#{domain}."
+          name = "#{challenge.record_name}.#{canonical_fqdn(domain)}."
 
           rrsets = list_existing_rrsets(hosted_zone_id, name)
           next if rrsets.empty?
