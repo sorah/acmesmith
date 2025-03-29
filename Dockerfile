@@ -1,4 +1,4 @@
-FROM sorah/ruby:3.2-dev as builder
+FROM sorah/ruby:3.4-dev as builder
 
 #RUN apt-get update \
 #    && apt-get install -y libmysqlclient-dev git-core \
@@ -12,7 +12,7 @@ RUN sed -i -e 's|Acmesmith::VERSION|"0.0.0"|g' -e '/^require.*acmesmith.version/
 
 RUN bundle install --path /gems --jobs 100 --without development
 
-FROM sorah/ruby:3.2
+FROM sorah/ruby:3.4
 
 #RUN apt-get update \
 #    && apt-get install -y libmysqlclient20 \
