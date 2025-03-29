@@ -21,7 +21,7 @@ jobs:
         ruby-version: ['3.1', '3.2', '3.3']
     steps:
       - uses: actions/checkout@master
-      - uses: sorah-rbpkg/actions@v1
+      - uses: sorah-rbpkg/actions@v2
         with:
           ruby-version: "${{ matrix.ruby-version }}"
           bundler-cache: true
@@ -56,7 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
 
-      - uses: sorah-rbpkg/actions@v1
+      - uses: sorah-rbpkg/actions@v2
         with:
           ruby-version: "${{ matrix.ruby-version }}"
           bundler-cache: true
