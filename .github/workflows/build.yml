@@ -19,19 +19,12 @@ jobs:
       fail-fast: false
       matrix:
         ruby-version: ['3.1', '3.2', '3.3']
-    container:
-      image: public.ecr.aws/sorah/ruby:${{ matrix.ruby-version }}-dev
     steps:
-
-      - name: Cache bundled gems
-        uses: actions/cache@v1
-        id: rspec-bundle
-        with:
-          path: ~/bundle
-          key: ${{ runner.os }}-${{ matrix.ruby-version }}
-
       - uses: actions/checkout@master
-      - run: 'bundle install --path ~/bundle'
+      - uses: sorah-rbpkg/actions@v1
+        with:
+          ruby-version: "${{ matrix.ruby-version }}"
+          bundler-cache: true
       - run: 'bundle exec rspec -fd'
 
   integration-pebble:
@@ -63,16 +56,14 @@ jobs:
     steps:
       - uses: actions/checkout@master
 
-      - name: Cache bundled gems
-        uses: actions/cache@v1
-        id: instegration-pebble-bundle
+      - uses: sorah-rbpkg/actions@v1
         with:
-          path: ~/bundle
-          key: ${{ runner.os }}-${{ matrix.ruby-version }}
+          ruby-version: "${{ matrix.ruby-version }}"
+          bundler-cache: true
 
       - run: 'docker run -d --net=host --rm letsencrypt/pebble pebble -config /test/config/pebble-config.json -strict -dnsserver 127.0.0.1:8053'
       - run: 'docker run -d --net=host --rm letsencrypt/pebble-challtestsrv pebble-challtestsrv -management :8055 -defaultIPv4 127.0.0.1'
-      - run: 'docker run --net=host -e CI --rm -v $(pwd):/work -v $(realpath ~/bundle):/bundle public.ecr.aws/sorah/ruby:${{ matrix.ruby-version  }}-dev sh -c "cd /work && bundle install --path /bundle && bundle exec rspec -fd -t integration_pebble"'
+      - run: 'bundle exec rspec -fd -t integration_pebble'
 
   docker-build:
     name: docker-build
