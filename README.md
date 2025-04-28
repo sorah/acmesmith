@@ -67,7 +67,7 @@ $ acmesmith save-pkcs12      COMMON_NAME --output=PATH  # Save certificate and p
 ```
 
 ```
-$ acmesmith autorenew [-d DAYS] # Renew certificates which being expired soon
+$ acmesmith autorenew [-r RATIO] [-d DAYS] # Renew certificates which being expired soon. Default to -r 1/3
 ```
 
 ```
