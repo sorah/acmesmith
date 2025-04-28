@@ -1,3 +1,10 @@
+## v2.7.0 (2025-04-28)
+
+### Enhancements, New behaviour
+
+- autorenew: gains new option `--remaining-life` (`-r`) to specify threshold in ratio of remaining lifetime to total lifetime, e.g. `1/3`, `50%`.
+- autonenew: in addition to above, the default option is now adjusted to `--reamining-life 1/3` instead of `--days 7`. This conforms to the Let's Encrypt recommendation to renew certificates when its remaining lifetime is less than 1/3 of the total lifetime.
+
 ## v2.6.1 (2024-12-05)
 
 ### Fixes

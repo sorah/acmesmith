@@ -143,9 +143,20 @@ module Acmesmith
     end
 
     desc "autorenew [COMMON_NAMES]", "request renewal of certificates which expires soon"
-    method_option :days, type: :numeric, aliases: %w(-d), default: 7, desc: 'specify threshold in days to select certificates to renew'
+    method_option :days, type: :numeric, aliases: %w(-d), default: nil, desc: 'specify threshold in days to select certificates to renew'
+    method_option :remaining_life, type: :string, aliases: %w(-r), default: '1/3', desc: "Specify threshold based on remaining life. Accepts a percentage ('20%') or fraction ('1/3')"
     def autorenew(*common_names)
-      client.autorenew(days: options[:days], common_names: common_names.empty? ? nil : common_names)
+      remaining_life = case options[:remaining_life]
+                       when %r{\A\d+/\d+\z}
+                         Rational(options[:remaining_life])
+                       when %r{\A([\d.]+)%\z}
+                         Rational($1.to_f, 100)
+                       when nil
+                         nil
+                       else
+                         raise ArgumentError, "invalid format for --remaining-life: it must be in '..%' or '../..'"
+                       end
+      client.autorenew(days: options[:days], remaining_life: remaining_life, common_names: common_names.empty? ? nil : common_names)
     end
 
     desc "add-san COMMON_NAME [ADDITIONAL_SANS]", "request renewal of existing certificate with additional SANs"

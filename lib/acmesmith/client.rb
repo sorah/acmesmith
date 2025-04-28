@@ -122,14 +122,23 @@ module Acmesmith
       SaveCertificateService.new(cert, **kwargs).perform!
     end
 
-    def autorenew(days: 7, common_names: nil)
+    def autorenew(days: 30, remaining_life: nil, common_names: nil)
       (common_names || storage.list_certificates).each do |cn|
         puts "=> #{cn}"
         cert = storage.get_certificate(cn)
         not_after = cert.certificate.not_after.utc
 
-        puts "   Not valid after: #{not_after}"
-        next unless (cert.certificate.not_after.utc - Time.now.utc) < (days.to_i * 86400)
+        lifetime = cert.certificate.not_after.utc - cert.certificate.not_before.utc
+        remaining = cert.certificate.not_after.utc - Time.now.utc
+        ratio = Rational(remaining,lifetime)
+
+        has_to_renew = false
+        has_to_renew ||= days && remaining < (days.to_i * 86400)
+        has_to_renew ||= remaining_life && ratio < remaining_life
+
+        puts "   Not valid after: #{not_after} (lifetime=#{format_duration(lifetime+1)}, remaining=#{format_duration(remaining)}, #{"%0.2f" % (ratio.to_f*100)}%)"
+        next unless has_to_renew
+
         puts " * Renewing: CN=#{cert.common_name}, SANs=#{cert.sans.join(',')}"
         order_with_private_key(cert.common_name, *cert.sans, private_key: regenerate_private_key(cert.public_key))
       end
@@ -144,6 +153,22 @@ module Acmesmith
     end
 
     private
+
+    # @param [Numeric] duration
+    def format_duration(duration)
+      raise ArgumentError if !duration.is_a?(Numeric) || duration < 0
+
+      # Calculate components using divmod
+      days, remainder  = duration.divmod(86400)
+      hours, remainder = remainder.divmod(3600)
+      minutes, seconds = remainder.divmod(60)
+
+      # Create [value, unit] pairs, filter out zero values, format, and join
+      [[days, 'd'], [hours, 'h'], [minutes, 'm'], [seconds, 's']]
+        .select { |v,| v > 0 }
+        .map { |v, unit| "#{v.to_i}#{unit}" }
+        .join
+    end
 
 
     def config
