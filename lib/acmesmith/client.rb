@@ -156,7 +156,13 @@ module Acmesmith
 
     # @param [Numeric] duration
     def format_duration(duration)
-      raise ArgumentError if !duration.is_a?(Numeric) || duration < 0
+      raise ArgumentError if !duration.is_a?(Numeric)
+      negative = if duration < 0
+        duration *= -1
+        true
+      else
+        false
+      end
 
       # Calculate components using divmod
       days, remainder  = duration.divmod(86400)
@@ -167,6 +173,7 @@ module Acmesmith
       [[days, 'd'], [hours, 'h'], [minutes, 'm'], [seconds, 's']]
         .select { |v,| v > 0 }
         .map { |v, unit| "#{v.to_i}#{unit}" }
+        .then { |a| negative ? ['-', *a] : a }
         .join
     end
 

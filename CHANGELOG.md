@@ -1,3 +1,9 @@
+## v2.7.1 (2025-08-21)
+
+### Bug fixes
+
+- autorenew: Failed when expired certificates were present. [#72](https://github.com/sorah/acmesmith/issues/72)
+
 ## v2.7.0 (2025-04-28)
 
 ### Enhancements
