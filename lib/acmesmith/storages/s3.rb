@@ -83,34 +83,34 @@ module Acmesmith
           @s3.put_object(params)
         end
 
-        put.call certificate_key(cert.common_name, cert.version), "#{h[:certificate].rstrip}\n", false
-        put.call chain_key(cert.common_name, cert.version), "#{h[:chain].rstrip}\n", false
-        put.call fullchain_key(cert.common_name, cert.version), "#{h[:fullchain].rstrip}\n", false
-        put.call private_key_key(cert.common_name, cert.version), "#{h[:private_key].rstrip}\n", use_kms
+        put.call certificate_key(cert.name, cert.version), "#{h[:certificate].rstrip}\n", false
+        put.call chain_key(cert.name, cert.version), "#{h[:chain].rstrip}\n", false
+        put.call fullchain_key(cert.name, cert.version), "#{h[:fullchain].rstrip}\n", false
+        put.call private_key_key(cert.name, cert.version), "#{h[:private_key].rstrip}\n", use_kms
 
         if generate_pkcs12?(cert)
-          put.call pkcs12_key(cert.common_name, cert.version), "#{cert.pkcs12(@pkcs12_passphrase).to_der}\n", use_kms, 'application/x-pkcs12'
+          put.call pkcs12_key(cert.name, cert.version), "#{cert.pkcs12(@pkcs12_passphrase).to_der}\n", use_kms, 'application/x-pkcs12'
         end
 
         if update_current
           @s3.put_object(
             bucket: bucket,
-            key: certificate_current_key(cert.common_name),
+            key: certificate_current_key(cert.name),
             content_type: 'text/plain',
             body: cert.version,
           )
         end
       end
 
-      def get_certificate(common_name, version: 'current')
-        version = certificate_current(common_name) if version == 'current'
+      def get_certificate(name, version: 'current')
+        version = certificate_current(name) if version == 'current'
 
-        certificate = @s3.get_object(bucket: bucket, key: certificate_key(common_name, version)).body.read
-        chain = @s3.get_object(bucket: bucket, key: chain_key(common_name, version)).body.read
-        private_key = @s3.get_object(bucket: bucket, key: private_key_key(common_name, version)).body.read
+        certificate = @s3.get_object(bucket: bucket, key: certificate_key(name, version)).body.read
+        chain = @s3.get_object(bucket: bucket, key: chain_key(name, version)).body.read
+        private_key = @s3.get_object(bucket: bucket, key: private_key_key(name, version)).body.read
         Certificate.new(certificate, chain, private_key)
       rescue Aws::S3::Errors::NoSuchKey
-        raise NotExist.new("Certificate for #{common_name.inspect} of #{version} version doesn't exist")
+        raise NotExist.new("Certificate for #{name.inspect} of #{version} version doesn't exist")
       end
 
       def list_certificates
@@ -125,8 +125,8 @@ module Acmesmith
         end
       end
 
-      def list_certificate_versions(common_name)
-        cert_ver_prefix = "#{prefix}certs/#{common_name}/"
+      def list_certificate_versions(name)
+        cert_ver_prefix = "#{prefix}certs/#{name}/"
         @s3.list_objects(
           bucket: bucket,
           delimiter: '/',
@@ -137,8 +137,8 @@ module Acmesmith
         end.reject { |_| _ == 'current' }
       end
 
-      def get_current_certificate_version(common_name)
-        certificate_current(common_name)
+      def get_current_certificate_version(name)
+        certificate_current(name)
       end
 
       private

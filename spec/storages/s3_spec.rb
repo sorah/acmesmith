@@ -240,7 +240,7 @@ RSpec.describe Acmesmith::Storages::S3 do
     end
 
     describe "#put_certificate" do
-      let(:certificate) { double(:certificate, common_name: 'common-name', version: 'version') }
+      let(:certificate) { double(:certificate, name: 'common-name', common_name: 'common-name', version: 'version') }
       let(:update_current) { false }
 
       subject(:action) { storage.put_certificate(certificate, PASSPHRASE, update_current: update_current) }
