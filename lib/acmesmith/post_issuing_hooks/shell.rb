@@ -10,10 +10,10 @@ module Acmesmith
       end
 
       def execute
-        puts "=> Executing Post Issueing Hook for #{common_name} in #{self.class.name}"
+        puts "=> Executing Post Issuing Hook for #{certificate.name.inspect} in #{self.class.name}"
         puts " $ #{@command}"
 
-        status = system({"COMMON_NAME" => common_name}, @command)
+        status = system({"CERT_NAME" => certificate.name, "COMMON_NAME" => common_name}.compact, @command)
 
         unless status
           if @ignore_failure

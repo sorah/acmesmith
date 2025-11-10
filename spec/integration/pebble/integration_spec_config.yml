@@ -12,6 +12,6 @@ challenge_responders:
 post_issuing_hooks:
   "flag.invalid":
     - shell:
-        command: touch tmp/integration-pebble/flag-${COMMON_NAME}
+        command: touch tmp/integration-pebble/flag-${CERT_NAME}
 
 passphrase_from_env: true

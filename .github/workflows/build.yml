@@ -61,8 +61,8 @@ jobs:
           ruby-version: "${{ matrix.ruby-version }}"
           bundler-cache: true
 
-      - run: 'docker run -d --net=host --rm letsencrypt/pebble pebble -config /test/config/pebble-config.json -strict -dnsserver 127.0.0.1:8053'
-      - run: 'docker run -d --net=host --rm letsencrypt/pebble-challtestsrv pebble-challtestsrv -management :8055 -defaultIPv4 127.0.0.1'
+      - run: 'docker run -d --net=host --rm ghcr.io/letsencrypt/pebble:2.8 -config /test/config/pebble-config.json -strict -dnsserver 127.0.0.1:8053'
+      - run: 'docker run -d --net=host --rm ghcr.io/letsencrypt/pebble-challtestsrv:2.8 -management :8055 -defaultIPv4 127.0.0.1'
       - run: 'bundle exec rspec -fd -t integration_pebble'
 
   docker-build:

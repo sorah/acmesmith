@@ -3,13 +3,13 @@ require 'acmesmith/certificate'
 module Acmesmith
   class CertificateRetrievingService
     # @param acme [Acme::Client]
-    # @param common_name [String]
+    # @param name [String]
     # @param url [String] ACME Certificate URL
     # @param chain_preferences [Array<Acmesmith::Config::ChainPreference>]
-    def initialize(acme, common_name, url, chain_preferences: [])
+    def initialize(acme, name, url, chain_preferences: [])
       @acme = acme
       @url = url
-      @chain_preferences = chain_preferences.select { |_| _.filter.match?(common_name) }
+      @chain_preferences = chain_preferences.select { |_| _.filter.match?(name) }
     end
 
     attr_reader :acme

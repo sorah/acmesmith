@@ -25,28 +25,28 @@ module Acmesmith
         raise NotImplementedError
       end
 
-      # @param common_name [String]
+      # @param name [String]
       # @param version [String, nil]
       # @return [Acmesmith::Certificate]
-      def get_certificate(common_name, version: 'current')
+      def get_certificate(name, version: 'current')
         raise NotImplementedError
       end
 
-      # @param common_name [String]
-      # @return [String] array of common_names
+      # @param name [String]
+      # @return [String] array of certificate names
       def list_certificates
         raise NotImplementedError
       end
 
-      # @param common_name [String]
+      # @param name [String]
       # @return [String] array of versions
-      def list_certificate_versions(common_name)
+      def list_certificate_versions(name)
         raise NotImplementedError
       end
 
-      # @param common_name [String]
+      # @param name [String]
       # @return [String] current version
-      def get_current_certificate_version(common_name)
+      def get_current_certificate_version(name)
         raise NotImplementedError
       end
     end
