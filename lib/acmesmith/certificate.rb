@@ -128,16 +128,36 @@ module Acmesmith
       chain.map(&:to_pem).join("\n")
     end
 
-    # @return [String] common name
-    def common_name
-      certificate.subject.to_a.assoc('CN')[1]
+    # Returns a predicted certificate name, taken from common name or first SAN.
+    # Note that this value can contain colons (':') if name is taken from non-DNS subject alternative name.
+    # @return [String] certificate name
+    def name
+      common_name || sans.first || all_sans.first
     end
 
+    # Returns a certificate common name taken from the certificate subject's CN field.
+    # Under the real CA, CNs can be missing. Use #name instead to retrieve the certificate name for most cases.
+    # ref. https://github.com/letsencrypt/pebble/pull/491#pullrequestreview-2718607820
+    # @return [String, nil] common name
+    def common_name
+      certificate.subject.to_a.assoc('CN')&.fetch(1)
+    end
+
+    # Returns a list of subject alternative names included in the certificate.
+    # @return [Array<String>] Subject Alternative Names
+    def all_sans
+      certificate.extensions.select { |_| _.oid == 'subjectAltName' }.flat_map do |ext|
+        ext.value.split(/,\s*/)
+      end
+    end
+
+    # Returns a list of DNS subject alternative names included in the certificate.
+    # Strips DNS: prefix from returned values.
     # @return [Array<String>] Subject Alternative Names (dNSname)
     def sans
-      certificate.extensions.select { |_| _.oid == 'subjectAltName' }.flat_map do |ext|
-        ext.value.split(/,\s*/).select { |_| _.start_with?('DNS:') }.map { |_| _[4..-1] }
-      end
+      all_sans.select do |san|
+        san.start_with?('DNS:')
+      end.map { |_| _[4..-1] }
     end
 
     # @return [String] Version string (consists of NotBefore time & certificate serial)
@@ -147,7 +167,7 @@ module Acmesmith
 
     # @return [OpenSSL::PKCS12]
     def pkcs12(passphrase)
-      OpenSSL::PKCS12.create(passphrase, common_name, private_key, certificate, chain)
+      OpenSSL::PKCS12.create(passphrase, name, private_key, certificate, chain)
     end
 
     # @return [CertificateExport]

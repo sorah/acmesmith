@@ -126,9 +126,19 @@ RSpec.describe Acmesmith::Certificate do
     it { is_expected.to eq("acmesmith-dev-20200512j.lo.sorah.jp") }
   end
 
+  describe "#name" do
+    subject(:fullchain) { certificate.name }
+    it { is_expected.to eq("acmesmith-dev-20200512j.lo.sorah.jp") }
+  end
+
   describe "#sans" do
     subject(:fullchain) { certificate.sans }
     it { is_expected.to eq(['acmesmith-dev-20200512j.lo.sorah.jp', 'acmesmith-dev-20200512l.lo.sorah.jp']) }
+  end
+
+  describe "#all_sans" do
+    subject(:fullchain) { certificate.all_sans }
+    it { is_expected.to eq(['DNS:acmesmith-dev-20200512j.lo.sorah.jp', 'DNS:acmesmith-dev-20200512l.lo.sorah.jp']) }
   end
 
   describe "#version" do
