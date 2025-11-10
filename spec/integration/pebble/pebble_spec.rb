@@ -6,8 +6,8 @@ require 'open-uri'
 
 class PebbleRunner
   def self.start
-    @pebble = spawn(*%w(docker run --net=host --rm letsencrypt/pebble pebble -config /test/config/pebble-config.json -strict -dnsserver 127.0.0.1:8053))
-    @challtestsrv = spawn(*%w(docker run --net=host --rm letsencrypt/pebble-challtestsrv pebble-challtestsrv -management :8055 -defaultIPv4 127.0.0.1))
+    @pebble = spawn(*%w(docker run --net=host --rm ghcr.io/letsencrypt/pebble:2.8 -config /test/config/pebble-config.json -strict -dnsserver 127.0.0.1:8053))
+    @challtestsrv = spawn(*%w(docker run --net=host --rm ghcr.io/letsencrypt/pebble-challtestsrv:2.8 -management :8055 -defaultIPv4 127.0.0.1))
   end
 
   def self.wait
@@ -51,7 +51,7 @@ RSpec.describe "Integration with Pebble", integration_pebble: true do
     FileUtils.mkdir_p('./tmp/integration-pebble')
 
     unless File.exist?('./tmp/pebble.minica.crt')
-      File.write './tmp/pebble.minica.crt', URI.open('https://raw.githubusercontent.com/letsencrypt/pebble/master/test/certs/pebble.minica.pem', 'r', &:read)
+      File.write './tmp/pebble.minica.crt', URI.open('https://raw.githubusercontent.com/letsencrypt/pebble/refs/tags/v2.8.0/test/certs/pebble.minica.pem', 'r', &:read)
     end
 
     PebbleRunner.start if ENV['ACMESMITH_CI_START_PEBBLE']
