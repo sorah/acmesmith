@@ -1,5 +1,10 @@
 ## v2.8.0 (2025-11-11)
 
+### Enhancements
+
+- post_issuing_hooks/shell: Gained `$CERT_NAME` environment variable which is to replace `$COMMON_NAME` for certificates without CN field. [#76](https://github.com/sorah/acmesmith/pull/76)
+- certificate: gained `name` method (Certificate#name) in addition to Certificate#common_name, for certificates without CN field. Plugin authors are encouraged to migrate on this new API. [#76](https://github.com/sorah/acmesmith/pull/76)
+
 ### Updates
 
 - Update gemspec to the latest bundler's provided template. This removes certain irrevant files from a released gem package. [#73](https://github.com/sorah/acmesmith/issues/73)
