@@ -7,14 +7,16 @@ module Acmesmith
     class NotCompleted < StandardError; end
 
     # @param acme [Acme::Client] ACME client
-    # @param identifiers [Array<String>] Array of domain names for a ordering certificate. The first item will be a common name.
+    # @param common_name [String] Common Name for a ordering certificate
+    # @param identifiers [Array<String>] Array of domain names for a ordering certificate. common_name has to be explicitly included in this argument.
     # @param private_key [OpenSSL::PKey::PKey] Private key
     # @param challenge_responder_rules [Array<Acmesmith::Config::ChallengeResponderRule>] responders
     # @param chain_preferences [Array<Acmesmith::Config::ChainPreference>] chain_preferences
     # @param not_before [Time]
     # @param not_after [Time]
-    def initialize(acme:, identifiers:, private_key:, challenge_responder_rules:, chain_preferences:, not_before: nil, not_after: nil)
+    def initialize(acme:, common_name:, identifiers:, private_key:, challenge_responder_rules:, chain_preferences:, not_before: nil, not_after: nil)
       @acme = acme
+      @common_name = common_name
       @identifiers = identifiers
       @private_key = private_key
       @challenge_responder_rules = challenge_responder_rules
@@ -23,7 +25,7 @@ module Acmesmith
       @not_after = not_after
     end
 
-    attr_reader :acme, :identifiers, :private_key, :challenge_responder_rules, :chain_preferences, :not_before, :not_after
+    attr_reader :acme, :common_name, :identifiers, :private_key, :challenge_responder_rules, :chain_preferences, :not_before, :not_after
 
     def perform!
       puts "=> Ordering a certificate for the following identifiers:"
@@ -43,7 +45,7 @@ module Acmesmith
       finalize_order()
       wait_order_for_complete()
 
-      @certificate = Certificate.by_issuance(pem_chain, csr)
+      @certificate = Certificate.by_issuance(pem_chain, csr, name: common_name)
 
       puts
       puts "=> Certificate issued"
@@ -95,11 +97,6 @@ module Acmesmith
     # @return Acme::Client::Resources::Order[]
     def order
       @order or raise "BUG: order not yet generated"
-    end
-
-    # @return [String]
-    def common_name
-      identifiers.first
     end
 
     # @return [Array<String>]

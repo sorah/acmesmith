@@ -31,7 +31,7 @@ module Acmesmith
     end
 
     def post_issue_hooks(name)
-      cert = storage.get_certificate(name)
+      cert = load_certificate_from_storage(name)
       execute_post_issue_hooks(cert)
     end
 
@@ -125,7 +125,8 @@ module Acmesmith
     def autorenew(days: 30, remaining_life: nil, names: nil)
       (names || storage.list_certificates).each do |cn|
         puts "=> #{cn}"
-        cert = storage.get_certificate(cn)
+        cert = load_certificate_from_storage(cn)
+
         not_after = cert.certificate.not_after.utc
 
         lifetime = cert.certificate.not_after.utc - cert.certificate.not_before.utc
@@ -139,14 +140,14 @@ module Acmesmith
         puts "   Not valid after: #{not_after} (lifetime=#{format_duration(lifetime+1)}, remaining=#{format_duration(remaining)}, #{"%0.2f" % (ratio.to_f*100)}%)"
         next unless has_to_renew
 
-        puts " * Renewing: CN=#{cert.name}, SANs=#{cert.sans.join(',')}"
+        puts " * Renewing: #{cert.name.inspect}, SANs=#{cert.sans.join(',')}"
         order_with_private_key(cert.name, *cert.sans, private_key: regenerate_private_key(cert.public_key))
       end
     end
 
     def add_san(name, *add_sans)
-      puts "=> reissuing CN=#{name} with new SANs #{add_sans.join(?,)}"
-      cert = storage.get_certificate(name)
+      puts "=> reissuing #{name.inspect} with new SANs #{add_sans.join(?,)}"
+      cert = load_certificate_from_storage(name)
       sans = cert.sans + add_sans
       puts " * SANs will be: #{sans.join(?,)}"
       order_with_private_key(cert.name, *sans, private_key: regenerate_private_key(cert.public_key))
@@ -212,10 +213,11 @@ module Acmesmith
       end
     end
 
-    def order_with_private_key(*identifiers, private_key:, not_before: nil, not_after: nil)
+    def order_with_private_key(name, *identifiers, private_key:, not_before: nil, not_after: nil)
       order = OrderingService.new(
         acme: acme,
-        identifiers: identifiers,
+        common_name: name,
+        identifiers: [name, *identifiers],
         private_key: private_key,
         challenge_responder_rules: config.challenge_responders,
         chain_preferences: config.chain_preferences,
@@ -257,6 +259,13 @@ module Acmesmith
       else
         raise ArgumentError, "Unknown key type: #{template.class}"
       end
+    end
+
+    # Load certificate from storage, inherit name property to loaded certificate to ensure stability of #name during renewal.
+    def load_certificate_from_storage(name)
+      retval = storage.get_certificate(name)
+      retval.name = name
+      retval
     end
   end
 end

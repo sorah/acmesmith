@@ -17,10 +17,11 @@ module Acmesmith
     # Return Acmesmith::Certificate by an issued certificate
     # @param pem_chain [String]
     # @param csr [Acme::Client::CertificateRequest]
+    # @param name [String, nil]
     # @return [Acmesmith::Certificate]
-    def self.by_issuance(pem_chain, csr)
+    def self.by_issuance(pem_chain, csr, name: nil)
       pems = split_pems(pem_chain)
-      new(pems[0], pems[1..-1], csr.private_key, nil, csr)
+      new(pems[0], pems[1..-1], csr.private_key, nil, csr, name: name)
     end
 
     # @param certificate [OpenSSL::X509::Certificate, String]
@@ -28,7 +29,9 @@ module Acmesmith
     # @param private_key [String, OpenSSL::PKey::PKey]
     # @param key_passphrase [String, nil]
     # @param csr [String, OpenSSL::X509::Request, nil]
-    def initialize(certificate, chain, private_key, key_passphrase = nil, csr = nil)
+    # @param name [String, nil]
+    def initialize(certificate, chain, private_key, key_passphrase = nil, csr = nil, name: nil)
+      @name = name
       @certificate = case certificate
                      when OpenSSL::X509::Certificate
                        certificate
@@ -94,6 +97,8 @@ module Acmesmith
     # @return [OpenSSL::X509::Request]
     attr_reader :csr
 
+    attr_writer :name
+
     # Try to decrypt private_key if encrypted.
     # @param pw [String] passphrase for encrypted PEM
     # @raise [PrivateKeyDecrypted] if private_key is decrypted
@@ -132,7 +137,7 @@ module Acmesmith
     # Note that this value can contain colons (':') if name is taken from non-DNS subject alternative name.
     # @return [String] certificate name
     def name
-      common_name || sans.first || all_sans.first
+      @name || common_name || sans.first || all_sans.first
     end
 
     # Returns a certificate common name taken from the certificate subject's CN field.
