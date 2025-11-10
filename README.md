@@ -1,6 +1,6 @@
 # Acmesmith: A simple, effective ACME v2 client to use with many servers and a cloud
 
-![ci](https://github.com/sorah/acmesmith/workflows/ci/badge.svg?event=push)  <a href='https://ko-fi.com/J3J8CKMUU' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi3.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+[![ci](https://github.com/sorah/acmesmith/actions/workflows/build.yml/badge.svg?event=push)](https://github.com/sorah/acmesmith/actions/workflows/build.yml) <a href='https://ko-fi.com/J3J8CKMUU' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi3.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 
 Acmesmith is an [ACME (Automatic Certificate Management Environment)](https://github.com/ietf-wg-acme/acme) client that works perfect on environment with multiple servers. This client saves certificate and keys on cloud services (e.g. AWS S3) securely, then allow to deploy issued certificates onto your servers smoothly. This works well on [Let's encrypt](https://letsencrypt.org).

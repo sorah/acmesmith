@@ -20,8 +20,8 @@ jobs:
       matrix:
         ruby-version: ['3.2', '3.3', '3.4']
     steps:
-      - uses: actions/checkout@master
-      - uses: sorah-rbpkg/actions@v2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: sorah-rbpkg/actions@9cc24ab1f61acf159a1a05da78e03ffceb5b97e2 # v2.0.4
         with:
           ruby-version: "${{ matrix.ruby-version }}"
           bundler-cache: true
@@ -54,9 +54,9 @@ jobs:
       #        options: 'pebble-challtestsrv -management :8055 -defaultIPv4 127.0.0.1'
 
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - uses: sorah-rbpkg/actions@v2
+      - uses: sorah-rbpkg/actions@9cc24ab1f61acf159a1a05da78e03ffceb5b97e2 # v2.0.4
         with:
           ruby-version: "${{ matrix.ruby-version }}"
           bundler-cache: true
@@ -69,7 +69,7 @@ jobs:
     name: docker-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - run: 'echo $GITHUB_SHA > REVISION'
 
       - run: "docker pull ${DOCKER_REPO}:latest || :"
