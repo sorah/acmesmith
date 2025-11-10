@@ -5,6 +5,10 @@
 - post_issuing_hooks/shell: Gained `$CERT_NAME` environment variable which is to replace `$COMMON_NAME` for certificates without CN field. [#76](https://github.com/sorah/acmesmith/pull/76)
 - certificate: gained `name` method (Certificate#name) in addition to Certificate#common_name, for certificates without CN field. Plugin authors are encouraged to migrate on this new API. [#76](https://github.com/sorah/acmesmith/pull/76)
 
+### Fixes
+
+- A certificate name is now inherited to a new certificate during autorenew and add-san command for stability, otherwise it could be saved under an another name when CA has issued the new certificate with different subject field or SANs field due to its policy/behaviour change; If you're using 3rd party storage plugins, it has to be updated to use Certificate#name instead of Certificate#common_name to support certificates without CN field. [#77](https://github.com/sorah/acmesmith/pull/77)
+
 ### Updates
 
 - Update gemspec to the latest bundler's provided template. This removes certain irrevant files from a released gem package. [#73](https://github.com/sorah/acmesmith/issues/73)
