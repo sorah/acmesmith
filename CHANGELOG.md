@@ -3,6 +3,7 @@
 ### Updates
 
 - Update gemspec to the latest bundler's provided template. This removes certain irrevant files from a released gem package. [#73](https://github.com/sorah/acmesmith/issues/73)
+- Use rubygems.org trusted publishing via GitHub Actions [#73](https://github.com/sorah/acmesmith/issues/73)
 
 ## v2.7.1 (2025-08-21)
 
