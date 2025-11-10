@@ -23,7 +23,7 @@ module Acmesmith
         return
       end
 
-      log "Saving certificate CN=#{cert.common_name} (ver: #{cert.version})"
+      log "Saving certificate #{cert.name.inspect} (ver: #{cert.version})"
 
       write_file(key_file, key_mode, cert.private_key)
       write_file(certificate_file, certificate_mode, cert.certificate.to_pem)
