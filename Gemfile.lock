@@ -68,7 +68,7 @@ GEM
       rspec-support (~> 3.13.0)
     rspec-support (3.13.2)
     thor (1.4.0)
-    uri (1.0.3)
+    uri (1.0.4)
 
 PLATFORMS
   ruby
