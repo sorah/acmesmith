@@ -39,19 +39,19 @@ GEM
       aws-eventstream (~> 1, >= 1.0.2)
     base64 (0.2.0)
     diff-lcs (1.5.1)
-    faraday (2.12.1)
+    faraday (2.14.1)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
-    faraday-net_http (3.4.0)
-      net-http (>= 0.5.0)
+    faraday-net_http (3.4.2)
+      net-http (~> 0.5)
     faraday-retry (2.2.1)
       faraday (~> 2.0)
     jmespath (1.6.2)
-    json (2.9.0)
-    logger (1.6.2)
-    net-http (0.6.0)
-      uri
+    json (2.18.1)
+    logger (1.7.0)
+    net-http (0.9.1)
+      uri (>= 0.11.1)
     rake (13.2.1)
     rexml (3.4.2)
     rspec (3.13.0)
@@ -68,7 +68,7 @@ GEM
       rspec-support (~> 3.13.0)
     rspec-support (3.13.2)
     thor (1.4.0)
-    uri (1.0.3)
+    uri (1.1.1)
 
 PLATFORMS
   ruby
