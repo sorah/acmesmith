@@ -42,7 +42,7 @@ module Acmesmith
       end
 
       def warn_test
-        unless ENV['CI']
+        unless ENV['ACMESMITH_ACKNOWLEDGE_PEBBLE_CHALLTESTSRV_IS_INSECURE']
           $stderr.puts '!!!!!!!!! WARNING WARNING WARNING !!!!!!!!!'
           $stderr.puts '!!!! pebble-challtestsrv command is for TEST USAGE ONLY. It is trivially insecure, offering no authentication. Only use pebble-challtestsrv in a controlled test environment.'
           $stderr.puts '!!!! https://github.com/letsencrypt/pebble/blob/master/cmd/pebble-challtestsrv/README.md'

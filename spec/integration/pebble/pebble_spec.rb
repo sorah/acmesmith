@@ -11,6 +11,7 @@ class PebbleRunner
   end
 
   def self.wait
+    ENV['ACMESMITH_ACKNOWLEDGE_PEBBLE_CHALLTESTSRV_IS_INSECURE'] = '1'  # avoid warning message
     begin
       TCPSocket.open('localhost', 14000) do
       end

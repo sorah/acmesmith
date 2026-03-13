@@ -195,7 +195,7 @@ bundle exec rspec
 integration test using [letsencrypt/pebble](https://github.com/letsencrypt/pebble). needs Docker:
 
 ```
-ACMESMITH_CI_START_PEBBLE=1 CI=1 bundle exec -t integration_pebble
+ACMESMITH_CI_START_PEBBLE=1 bundle exec rspec -t integration_pebble
 ```
 
 ## Writing plugins
