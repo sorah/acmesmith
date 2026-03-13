@@ -30,6 +30,10 @@ module Acmesmith
       raise NotImplementedError, "Domain authorization in advance is still not available in acme-client (v2). Required authorizations will be performed when ordering certificates"
     end
 
+    def list_profiles
+      acme.profiles
+    end
+
     def post_issue_hooks(name)
       cert = load_certificate_from_storage(name)
       execute_post_issue_hooks(cert)
@@ -221,6 +225,7 @@ module Acmesmith
         private_key: private_key,
         challenge_responder_rules: config.challenge_responders,
         chain_preferences: config.chain_preferences,
+        profile_rules: config.profile_rules,
         not_before: not_before,
         not_after: not_after
       )

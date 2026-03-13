@@ -39,6 +39,21 @@ challenge_responders:
   - route53: {}
 
 ###
+### Profiles (optional)
+###
+
+## ACME certificate profiles allow selecting different certificate types.
+## Use `acmesmith list-profiles` to discover available profiles.
+## First matching rule wins.
+# profiles:
+#   - name: "shortlived"
+#     filter:
+#       subject_name_suffix:
+#         - .shortlived.example.com
+#   - name: "classic"
+#     # no filter = default/fallback
+
+###
 ### advanced options
 ###
 

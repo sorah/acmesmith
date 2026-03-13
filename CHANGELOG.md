@@ -1,3 +1,9 @@
+## [unreleased]
+
+### Enhancements
+
+- `acmesmith order` and configuration file gain `profiles` configuration to allow switching ACME profiles such as `shortlived`
+
 ## v2.8.0 (2025-11-11)
 
 ### Enhancements

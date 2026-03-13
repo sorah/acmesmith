@@ -133,6 +133,28 @@ RSpec.describe "Integration with Pebble", integration_pebble: true do
     end
   end
 
+  context "list-profiles" do
+    it "succeeds" do
+      output = IO.popen(cmd("list-profiles"), 'r', &:read)
+      expect($?.success?).to eq(true)
+      # Pebble may or may not expose profiles; just verify the command runs
+    end
+  end
+
+  context "order with profile" do
+    it "issues a shorter-lived certificate when matching shortlived profile" do
+      system(*cmd("order", "test.shortlived.invalid"), exception: true)
+      system(*cmd("order", "test.default.invalid"), exception: true)
+
+      shortlived_cert = OpenSSL::X509::Certificate.new(IO.popen(cmd("show-certificate", "--type=certificate", "test.shortlived.invalid")))
+      default_cert = OpenSSL::X509::Certificate.new(IO.popen(cmd("show-certificate", "--type=certificate", "test.default.invalid")))
+
+      shortlived_lifetime = shortlived_cert.not_after - shortlived_cert.not_before
+      default_lifetime = default_cert.not_after - default_cert.not_before
+      expect(shortlived_lifetime).to be < default_lifetime
+    end
+  end
+
   context "post_issue_hooks" do
     it "works" do
       system(*cmd("order", "flag.invalid"), exception: true)

@@ -14,18 +14,19 @@ module Acmesmith
     # @param chain_preferences [Array<Acmesmith::Config::ChainPreference>] chain_preferences
     # @param not_before [Time]
     # @param not_after [Time]
-    def initialize(acme:, common_name:, identifiers:, private_key:, challenge_responder_rules:, chain_preferences:, not_before: nil, not_after: nil)
+    def initialize(acme:, common_name:, identifiers:, private_key:, challenge_responder_rules:, chain_preferences:, profile_rules: [], not_before: nil, not_after: nil)
       @acme = acme
       @common_name = common_name
       @identifiers = identifiers
       @private_key = private_key
       @challenge_responder_rules = challenge_responder_rules
       @chain_preferences = chain_preferences
+      @profile_rules = profile_rules
       @not_before = not_before
       @not_after = not_after
     end
 
-    attr_reader :acme, :common_name, :identifiers, :private_key, :challenge_responder_rules, :chain_preferences, :not_before, :not_after
+    attr_reader :acme, :common_name, :identifiers, :private_key, :challenge_responder_rules, :chain_preferences, :profile_rules, :not_before, :not_after
 
     def perform!
       puts "=> Ordering a certificate for the following identifiers:"
@@ -35,9 +36,15 @@ module Acmesmith
         puts " * SAN: #{san}"
       end
 
+      resolved_profile = profile
+      if resolved_profile
+        puts
+        puts " * Profile: #{resolved_profile}"
+      end
+
       puts
       puts "=> Placing an order"
-      @order = acme.new_order(identifiers: identifiers, not_before: not_before, not_after: not_after)
+      @order = acme.new_order(identifiers: identifiers, not_before: not_before, not_after: not_after, profile: resolved_profile)
       puts " * URL: #{order.url}"
 
       ensure_authorization()
@@ -102,6 +109,10 @@ module Acmesmith
     # @return [Array<String>]
     def sans
       identifiers[1..-1]
+    end
+
+    def profile
+      profile_rules.find { |rule| rule.filter.match?(common_name) }&.name
     end
 
     # @return [Acme::Client::CertificateRequest]
