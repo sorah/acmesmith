@@ -30,7 +30,7 @@ jobs:
       - uses: ruby/setup-ruby@4eb9f110bac952a8b68ecf92e3b5c7a987594ba6 # v1.292.0
         with:
           bundler-cache: 'true'
-          ruby-version: '3.4.7'
+          ruby-version: '4.0.1'
       - name: Create GitHub release
         run: |
           tag_name="$(git describe --tags --abbrev=0)"
