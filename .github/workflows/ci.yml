@@ -7,52 +7,55 @@ on:
     branches: [master, ci-test]
 
 env:
-  DOCKER_REPO: 'sorah/acmesmith'
+  DOCKER_REPO: 'ghcr.io/sorah/acmesmith'
 
 jobs:
   test:
     uses: ./.github/workflows/_test.yml
 
-  docker-build:
-    name: docker-build
+  docker:
+    name: docker
+    needs: [test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - run: 'echo $GITHUB_SHA > REVISION'
 
-      - run: "docker pull ${DOCKER_REPO}:latest || :"
-      - name: "docker tag ${DOCKER_REPO}:${TAG} ${DOCKER_REPO}:latest"
-        run: |
-          TAG=$(basename "${{ github.ref }}")
-          docker pull ${DOCKER_REPO}:${TAG} || :
-          docker tag ${DOCKER_REPO}:${TAG} ${DOCKER_REPO}:latest || :
-        if: "${{ startsWith(github.ref, 'refs/tags/v') }}"
+      - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
-      - run: "docker pull ${DOCKER_REPO}:builder || :"
+      - uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: "docker build --pull --cache-from ${DOCKER_REPO}:builder --target builder -t ${DOCKER_REPO}:builder -f Dockerfile ."
-      - run: "docker build --pull --cache-from ${DOCKER_REPO}:builder --cache-from ${DOCKER_REPO}:latest -t ${DOCKER_REPO}:${GITHUB_SHA} -f Dockerfile ."
+      - uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        id: meta
+        with:
+          images: ${{ env.DOCKER_REPO }}
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
 
-      - run: "echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u sorah --password-stdin"
+      - uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        id: push
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - run: "docker push ${DOCKER_REPO}:builder"
-        if: "${{ github.ref == 'refs/heads/master' }}"
-      - run: "docker push ${DOCKER_REPO}:${GITHUB_SHA}"
-
-  docker-push:
-    name: docker-push
-    needs: [test, docker-build]
-    runs-on: ubuntu-latest
-    steps:
-      - run: "echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u sorah --password-stdin"
-      - run: "docker pull ${DOCKER_REPO}:${GITHUB_SHA}"
-
-      - run: |
-          docker tag ${DOCKER_REPO}:${GITHUB_SHA} ${DOCKER_REPO}:latest
-          docker push ${DOCKER_REPO}:latest
-        if: "${{ github.ref == 'refs/heads/master' }}"
-      - run: |
-          TAG=$(basename "${{ github.ref }}")
-          docker tag ${DOCKER_REPO}:${GITHUB_SHA} ${DOCKER_REPO}:${TAG}
-          docker push ${DOCKER_REPO}:${TAG}
-        if: "${{ startsWith(github.ref, 'refs/tags/v') }}"
+      - uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-name: ${{ env.DOCKER_REPO }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
