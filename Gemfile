@@ -4,4 +4,4 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'rexml'
-gem 'openssl'
+gem 'openssl', '4.0.0' # Must match with release.yml ruby-version :/
