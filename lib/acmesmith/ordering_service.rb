@@ -24,6 +24,8 @@ module Acmesmith
       @profile_rules = profile_rules
       @not_before = not_before
       @not_after = not_after
+
+      @order_url = nil # https://github.com/unixcharles/acme-client/pull/263
     end
 
     attr_reader :acme, :common_name, :identifiers, :private_key, :challenge_responder_rules, :chain_preferences, :profile_rules, :not_before, :not_after
@@ -79,12 +81,16 @@ module Acmesmith
       puts
 
       print " * Requesting..."
+      @order_url = order.url if defined?(Acme::Client::Error::OrderNotReloadable)
       order.finalize(csr: csr)
       puts" [ ok ]"
     end
 
     def wait_order_for_complete
+      # Workaround for https://github.com/unixcharles/acme-client/pull/263
+
       while %w(ready processing).include?(order.status)
+        order.instance_variable_set(:@url, @order_url) if @order_url
         order.reload()
         puts " * Waiting for complete: status=#{order.status}"
         sleep 2
