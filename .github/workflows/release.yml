@@ -7,6 +7,15 @@ jobs:
   test:
     uses: ./.github/workflows/_test.yml
 
+  docker:
+    needs: [test]
+    uses: ./.github/workflows/_docker.yml
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
   release:
     needs: [test]
     runs-on: ubuntu-slim
