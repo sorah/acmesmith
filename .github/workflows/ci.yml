@@ -2,7 +2,6 @@ name: ci
 on:
   schedule:
     - cron: '36 7 2,12,22 * *'
-  create: {}
   push:
     branches: [master, ci-test]
 
