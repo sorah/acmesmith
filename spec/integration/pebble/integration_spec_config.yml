@@ -14,4 +14,12 @@ post_issuing_hooks:
     - shell:
         command: touch tmp/integration-pebble/flag-${CERT_NAME}
 
+profiles:
+  - name: "shortlived"
+    filter:
+      subject_name_suffix: [".shortlived.invalid"]
+  - name: "default"
+    filter:
+      subject_name_suffix: [".default.invalid"]
+
 passphrase_from_env: true

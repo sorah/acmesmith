@@ -176,6 +176,28 @@ chain_preferences:
         - '\Aapp\d+.example.org\z'
 ```
 
+### Profiles
+
+Some ACME CAs support [certificate profiles](https://datatracker.ietf.org/doc/draft-ietf-acme-profiles/) that allow selecting different certificate types (e.g., short-lived, classic). Use the `list-profiles` command to discover available profiles from your CA:
+
+```
+$ acmesmith list-profiles
+```
+
+To configure profile selection per domain, add `profiles` to your configuration. The first matching rule wins:
+
+```yaml
+profiles:
+  - name: "shortlived"
+    filter:
+      subject_name_suffix:
+        - .shortlived.example.com
+  - name: "classic"
+    # no filter = default/fallback
+```
+
+The `filter` block supports the same options as challenge responders: `subject_name_exact`, `subject_name_suffix`, and `subject_name_regexp`.
+
 ## Vendor dependent notes
 
 - [./docs/vendor/aws.md](./docs/vendor/aws.md): IAM and KMS key policies, and some tips
@@ -195,7 +217,7 @@ bundle exec rspec
 integration test using [letsencrypt/pebble](https://github.com/letsencrypt/pebble). needs Docker:
 
 ```
-ACMESMITH_CI_START_PEBBLE=1 CI=1 bundle exec -t integration_pebble
+ACMESMITH_CI_START_PEBBLE=1 bundle exec rspec -t integration_pebble
 ```
 
 ## Writing plugins

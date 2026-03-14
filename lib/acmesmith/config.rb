@@ -2,6 +2,7 @@ require 'yaml'
 require 'acmesmith/storages'
 require 'acmesmith/challenge_responders'
 require 'acmesmith/challenge_responder_filter'
+require 'acmesmith/subject_name_filter'
 require 'acmesmith/domain_name_filter'
 require 'acmesmith/post_issuing_hooks'
 
@@ -9,6 +10,7 @@ module Acmesmith
   class Config
     ChallengeResponderRule = Struct.new(:challenge_responder, :filter, keyword_init: true)
     ChainPreference = Struct.new(:root_issuer_name, :root_issuer_key_id, :filter, keyword_init: true)
+    ProfileRule = Data.define(:name, :filter)
 
     def self.load_yaml(path)
       new YAML.load_file(path)
@@ -34,6 +36,10 @@ module Acmesmith
 
       if @config.key?('chain_preferences') && !@config.fetch('chain_preferences').kind_of?(Array)
         raise ArgumentError, "config['chain_preferences'] must be an Array"
+      end
+
+      if @config.key?('profiles') && !@config.fetch('profiles').kind_of?(Array)
+        raise ArgumentError, "config['profiles'] must be an Array"
       end
     end
 
@@ -120,6 +126,16 @@ module Acmesmith
             root_issuer_key_id: spec['root_issuer_key_id'],
             filter: DomainNameFilter.new(**filter),
           )
+        end
+      end
+    end
+
+    def profile_rules
+      @profile_rules ||= begin
+        specs = @config['profiles'] || []
+        specs.map do |spec|
+          filter = spec.fetch('filter', {}).map { |k,v| [k.to_sym, v] }.to_h
+          ProfileRule.new(name: spec['name'], filter: SubjectNameFilter.new(**filter))
         end
       end
     end

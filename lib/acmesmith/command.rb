@@ -54,6 +54,19 @@ module Acmesmith
     end
     map 'post-issue-hooks' => :post_issue_hooks
 
+    desc "list-profiles", "List available ACME certificate profiles"
+    def list_profiles
+      profiles = client.list_profiles
+      if profiles.nil? || profiles.empty?
+        puts "No profiles available from this ACME directory"
+        return
+      end
+      profiles.each do |name, description|
+        puts "#{name}: #{description}"
+      end
+    end
+    map 'list-profiles' => :list_profiles
+
     desc "list [NAME]", "list certificates or its versions"
     def list(name = nil)
       if name

@@ -6,11 +6,12 @@ require 'open-uri'
 
 class PebbleRunner
   def self.start
-    @pebble = spawn(*%w(docker run --net=host --rm ghcr.io/letsencrypt/pebble:2.8 -config /test/config/pebble-config.json -strict -dnsserver 127.0.0.1:8053))
-    @challtestsrv = spawn(*%w(docker run --net=host --rm ghcr.io/letsencrypt/pebble-challtestsrv:2.8 -management :8055 -defaultIPv4 127.0.0.1))
+    @pebble = spawn(*%w(docker run --net=host --rm ghcr.io/letsencrypt/pebble:2.10 -config /test/config/pebble-config.json -strict -dnsserver 127.0.0.1:8053))
+    @challtestsrv = spawn(*%w(docker run --net=host --rm ghcr.io/letsencrypt/pebble-challtestsrv:2.10 -management :8055 -defaultIPv4 127.0.0.1))
   end
 
   def self.wait
+    ENV['ACMESMITH_ACKNOWLEDGE_PEBBLE_CHALLTESTSRV_IS_INSECURE'] = '1'  # avoid warning message
     begin
       TCPSocket.open('localhost', 14000) do
       end
@@ -51,7 +52,7 @@ RSpec.describe "Integration with Pebble", integration_pebble: true do
     FileUtils.mkdir_p('./tmp/integration-pebble')
 
     unless File.exist?('./tmp/pebble.minica.crt')
-      File.write './tmp/pebble.minica.crt', URI.open('https://raw.githubusercontent.com/letsencrypt/pebble/refs/tags/v2.8.0/test/certs/pebble.minica.pem', 'r', &:read)
+      File.write './tmp/pebble.minica.crt', URI.open('https://raw.githubusercontent.com/letsencrypt/pebble/refs/tags/v2.10.0/test/certs/pebble.minica.pem', 'r', &:read)
     end
 
     PebbleRunner.start if ENV['ACMESMITH_CI_START_PEBBLE']
@@ -129,6 +130,28 @@ RSpec.describe "Integration with Pebble", integration_pebble: true do
 
       certificate = OpenSSL::X509::Certificate.new(IO.popen(cmd("show-certificate", "--type=certificate", "rsa3072.invalid")))
       expect(certificate.public_key.n.num_bits).to eq 3072  # new cert has the same key length
+    end
+  end
+
+  context "list-profiles" do
+    it "succeeds" do
+      output = IO.popen(cmd("list-profiles"), 'r', &:read)
+      expect($?.success?).to eq(true)
+      # Pebble may or may not expose profiles; just verify the command runs
+    end
+  end
+
+  context "order with profile" do
+    it "issues a shorter-lived certificate when matching shortlived profile" do
+      system(*cmd("order", "test.shortlived.invalid"), exception: true)
+      system(*cmd("order", "test.default.invalid"), exception: true)
+
+      shortlived_cert = OpenSSL::X509::Certificate.new(IO.popen(cmd("show-certificate", "--type=certificate", "test.shortlived.invalid")))
+      default_cert = OpenSSL::X509::Certificate.new(IO.popen(cmd("show-certificate", "--type=certificate", "test.default.invalid")))
+
+      shortlived_lifetime = shortlived_cert.not_after - shortlived_cert.not_before
+      default_lifetime = default_cert.not_after - default_cert.not_before
+      expect(shortlived_lifetime).to be < default_lifetime
     end
   end
 
