@@ -4,7 +4,11 @@ on:
       - 'v*'
 
 jobs:
+  test:
+    uses: ./.github/workflows/_test.yml
+
   release:
+    needs: [test]
     runs-on: ubuntu-slim
     environment:
       name: release

@@ -1,8 +1,21 @@
 ## [unreleased]
 
+## v2.9.0 (2026-03-14)
+
 ### Enhancements
 
-- `acmesmith order` and configuration file gain `profiles` configuration to allow switching ACME profiles such as `shortlived`
+- `acmesmith order` and configuration file gain `profiles` configuration to allow switching ACME profiles such as `shortlived` [#81](https://github.com/sorah/acmesmith/pull/81)
+
+  ```yaml
+  profiles:
+    - name: "shortlived"
+      filter:
+        subject_name_suffix: [".shortlived.example.invalid"]
+  ```
+
+### Changes
+
+- Prebuilt Docker images are no longer pushed to Dockerhub. Use GHCR instead: [ghcr.io/sorah/acmesmith](https://ghcr.io/sorah/acmesmith)
 
 ## v2.8.0 (2025-11-11)
 
