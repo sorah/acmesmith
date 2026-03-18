@@ -66,5 +66,23 @@ RSpec.describe Acmesmith::SubjectNameFilter do
         expect(subject.match?('other.example.com')).to eq false
       end
     end
+
+    context 'with cidr filter' do
+      subject do
+        described_class.new(
+          subject_name_cidr: ['192.0.2.0/25', '2001:db8::/64'],
+        )
+      end
+
+      it 'matches domain in the subnet' do
+        expect(subject.match?('192.0.2.1')).to eq true
+        expect(subject.match?('2001:db8::1/64')).to eq true
+      end
+
+      it 'does not match domain not in the subnet' do
+        expect(subject.match?('192.0.2.255')).to eq false
+        expect(subject.match?('2001:db8:f::1/64')).to eq false
+      end
+    end
   end
 end
