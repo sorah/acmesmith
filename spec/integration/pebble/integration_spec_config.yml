@@ -7,7 +7,12 @@ storage:
   type: filesystem
   path: tmp/integration-pebble
 challenge_responders:
-  - pebble_challtestsrv_dns: {}
+  - filter:
+      subject_name_suffix: [".invalid"]
+    pebble_challtestsrv_dns: {}
+  - filter:
+      subject_name_cidr: ["127.0.0.0/8", "::1"]
+    pebble_challtestsrv_http: {}
 
 post_issuing_hooks:
   "flag.invalid":

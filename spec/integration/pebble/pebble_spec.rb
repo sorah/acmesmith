@@ -43,6 +43,22 @@ end
 RSpec.describe "Integration with Pebble", integration_pebble: true do
   PEBBLE_CONFIG = File.join(__dir__, 'integration_spec_config.yml')
 
+  def ip_sans_from_cert(pem)
+    OpenSSL::X509::Certificate.new(pem)
+      .extensions
+      .select { |_| _.oid == 'subjectAltName' }
+      .flat_map { |_| _.value.split(/,\s*/) }
+      .filter_map { |_| _[11..] if _.start_with?('IP Address:') }
+  end
+
+  def dns_sans_from_cert(pem)
+    OpenSSL::X509::Certificate.new(pem)
+      .extensions
+      .select { |_| _.oid == 'subjectAltName' }
+      .flat_map { |_| _.value.split(/,\s*/) }
+      .filter_map { |_| _[4..] if _.start_with?('DNS:') }
+  end
+
   def cmd(*args)
     ['bin/acmesmith', args.first, '-c', PEBBLE_CONFIG, *args[1..-1]]
   end
@@ -159,6 +175,43 @@ RSpec.describe "Integration with Pebble", integration_pebble: true do
     it "works" do
       system(*cmd("order", "flag.invalid"), exception: true)
       expect(File.exist?('tmp/integration-pebble/flag-flag.invalid')).to eq(true)
+    end
+  end
+
+  context 'IP SAN certificate' do
+    it 'issues a certificate with an IP SAN' do
+      system(*cmd('order', 'ipsan.invalid', '127.0.0.1'), exception: true)
+
+      pem = IO.popen(cmd('show-certificate', '--type=certificate', 'ipsan.invalid'), 'r', &:read)
+      expect(ip_sans_from_cert(pem)).to contain_exactly('127.0.0.1')
+      expect(dns_sans_from_cert(pem)).to contain_exactly('ipsan.invalid')
+    end
+
+    it 'preserves the IP SAN through add-san DNS' do
+      system(*cmd('order', 'ipsan-add-dns.invalid', '127.0.0.1', '::1'), exception: true)
+
+      system(*cmd('add-san', 'ipsan-add-dns.invalid', 'another.invalid'), exception: true)
+      pem = IO.popen(cmd('show-certificate', '--type=certificate', 'ipsan-add-dns.invalid'), 'r', &:read)
+      expect(ip_sans_from_cert(pem)).to contain_exactly('127.0.0.1', '0:0:0:0:0:0:0:1')
+      expect(dns_sans_from_cert(pem)).to contain_exactly('ipsan-add-dns.invalid', 'another.invalid')
+    end
+
+    it 'preserves the IP SAN through add-san IP' do
+      system(*cmd('order', 'ipsan-add-ip.invalid', '127.0.0.1'), exception: true)
+
+      system(*cmd('add-san', 'ipsan-add-ip.invalid', '127.0.0.2', '::1'), exception: true)
+      pem = IO.popen(cmd('show-certificate', '--type=certificate', 'ipsan-add-ip.invalid'), 'r', &:read)
+      expect(ip_sans_from_cert(pem)).to contain_exactly('127.0.0.1', '127.0.0.2', '0:0:0:0:0:0:0:1')
+      expect(dns_sans_from_cert(pem)).to contain_exactly('ipsan-add-ip.invalid')
+    end
+
+    it 'preserves the SANs through autorenew' do
+      system(*cmd('order', 'ipsan-autorenew.invalid', '127.0.0.1'), exception: true)
+
+      system(*cmd('autorenew', 'ipsan-autorenew.invalid', '--days', '9999'), exception: true)
+      pem = IO.popen(cmd('show-certificate', '--type=certificate', 'ipsan-autorenew.invalid'), 'r', &:read)
+      expect(ip_sans_from_cert(pem)).to contain_exactly('127.0.0.1')
+      expect(dns_sans_from_cert(pem)).to contain_exactly('ipsan-autorenew.invalid')
     end
   end
 

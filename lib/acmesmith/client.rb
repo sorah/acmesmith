@@ -144,15 +144,16 @@ module Acmesmith
         puts "   Not valid after: #{not_after} (lifetime=#{format_duration(lifetime+1)}, remaining=#{format_duration(remaining)}, #{"%0.2f" % (ratio.to_f*100)}%)"
         next unless has_to_renew
 
-        puts " * Renewing: #{cert.name.inspect}, SANs=#{cert.sans.join(',')}"
-        order_with_private_key(cert.name, *cert.sans, private_key: regenerate_private_key(cert.public_key))
+        sans = cert.sans + cert.ip_sans
+        puts " * Renewing: #{cert.name.inspect}, SANs=#{sans.join(',')}"
+        order_with_private_key(cert.name, *sans, private_key: regenerate_private_key(cert.public_key))
       end
     end
 
     def add_san(name, *add_sans)
       puts "=> reissuing #{name.inspect} with new SANs #{add_sans.join(?,)}"
       cert = load_certificate_from_storage(name)
-      sans = cert.sans + add_sans
+      sans = cert.sans + cert.ip_sans + add_sans
       puts " * SANs will be: #{sans.join(?,)}"
       order_with_private_key(cert.name, *sans, private_key: regenerate_private_key(cert.public_key))
     end
