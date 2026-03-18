@@ -31,7 +31,7 @@ Acmesmith is an [ACME (Automatic Certificate Management Environment)](https://gi
   spec.executables = spec.files.grep(%r{\Abin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "acme-client", '>= 2.0.7', '< 3'
+  spec.add_dependency "acme-client", '>= 2.0.29', '< 3'  # 2.0.29 introduced IP-SAN support
   spec.add_dependency "aws-sdk-acm"
   spec.add_dependency "aws-sdk-route53"
   spec.add_dependency "aws-sdk-s3"
