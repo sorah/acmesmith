@@ -165,6 +165,13 @@ module Acmesmith
       end.map { |_| _[4..-1] }
     end
 
+    # Returns a list of IP address subject alternative names included in the certificate.
+    # Strips IP Address: prefix from returned values.
+    # @return [Array<String>] Subject Alternative Names (iPAddress)
+    def ip_sans
+      all_sans.select { |san| san.start_with?('IP Address:') }.map { |_| _[11..-1] }
+    end
+
     # @return [String] Version string (consists of NotBefore time & certificate serial)
     def version
       "#{certificate.not_before.utc.strftime('%Y%m%d-%H%M%S')}_#{certificate.serial.to_i.to_s(16)}"

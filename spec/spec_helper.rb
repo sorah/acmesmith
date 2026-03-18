@@ -11,6 +11,8 @@ PASSPHRASE = 'tonymoris'
 PEM_LEAF = File.read(File.join(__dir__, 'leaf.pem'))
 LEAF = OpenSSL::X509::Certificate.new(PEM_LEAF)
 
+PEM_LEAF_IPSAN = File.read(File.join(__dir__, 'leaf_ip_san.pem'))
+
 PEM_CHAIN = File.read(File.join(__dir__, 'chain.pem'))
 CHAIN = PEM_CHAIN.each_line.slice_before(/^-----BEGIN CERTIFICATE-----$/).map(&:join).map { |_| OpenSSL::X509::Certificate.new(_) }
 

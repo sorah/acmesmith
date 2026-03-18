@@ -145,4 +145,26 @@ RSpec.describe Acmesmith::Certificate do
     subject(:fullchain) { certificate.version }
     it { is_expected.to eq("20200511-192010_fa5aa9032181a09b2cebec848658eb2c5f79") }
   end
+
+  context "with IP-SAN certificate" do
+    let(:given_certificate) { PEM_LEAF_IPSAN }
+
+    describe "#ip_sans" do
+      it "returns only IP addresses" do
+         expect(certificate.ip_sans).to contain_exactly('2406:DA14:DFE:C0D0:1F90:68C0:A067:569B', '35.74.65.6')
+      end
+    end
+
+    describe "#sans" do
+      it "returns only DNS names" do
+        expect(certificate.sans).to contain_exactly('70ca8ae3ec7d3052.test.hanazuki.jp')
+      end
+    end
+
+    describe "#all_sans" do
+      it "contains both DNS and IP entries" do
+        expect(certificate.all_sans).to contain_exactly('DNS:70ca8ae3ec7d3052.test.hanazuki.jp', 'IP Address:35.74.65.6', 'IP Address:2406:DA14:DFE:C0D0:1F90:68C0:A067:569B')
+      end
+    end
+  end
 end
