@@ -1,6 +1,7 @@
 require 'acmesmith/authorization_service'
 require 'acmesmith/certificate'
 require 'acmesmith/certificate_retrieving_service'
+require 'ipaddr'
 
 module Acmesmith
   class OrderingService
@@ -8,7 +9,7 @@ module Acmesmith
 
     # @param acme [Acme::Client] ACME client
     # @param common_name [String] Common Name for a ordering certificate
-    # @param identifiers [Array<String>] Array of domain names for a ordering certificate. common_name has to be explicitly included in this argument.
+    # @param identifiers [Array<String>] Array of domain names or IP addresses for a ordering certificate. common_name has to be explicitly included in this argument.
     # @param private_key [OpenSSL::PKey::PKey] Private key
     # @param challenge_responder_rules [Array<Acmesmith::Config::ChallengeResponderRule>] responders
     # @param chain_preferences [Array<Acmesmith::Config::ChainPreference>] chain_preferences
@@ -46,7 +47,12 @@ module Acmesmith
 
       puts
       puts "=> Placing an order"
-      @order = acme.new_order(identifiers: identifiers, not_before: not_before, not_after: not_after, profile: resolved_profile)
+      @order = acme.new_order(
+        identifiers: identifiers.map { |id| acme_identifier(id) },
+        not_before: not_before,
+        not_after: not_after,
+        profile: resolved_profile,
+      )
       puts " * URL: #{order.url}"
 
       ensure_authorization()
@@ -124,6 +130,22 @@ module Acmesmith
     # @return [Acme::Client::CertificateRequest]
     def csr
       @csr ||= Acme::Client::CertificateRequest.new(subject: { common_name: common_name }, names: sans, private_key: private_key)
+    end
+
+    private
+
+    # Translate subject name to ACME identifier
+    def acme_identifier(name)
+      if %r{[/%]} =~ name  # Reject CIDRs and IPv6 zone IDs
+        raise ArgumentError, "invalid character in subject name: #{name.inspect}"
+      end
+
+      begin
+        IPAddr.new(name)  # Test if it parses
+        { type: 'ip', value: name }
+      rescue IPAddr::InvalidAddressError
+        { type: 'dns', value: name }
+      end
     end
   end
 end

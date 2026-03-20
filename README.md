@@ -136,6 +136,8 @@ challenge_responders:
         - .example.org
       subject_name_regexp:
         - '\Aapp\d+.example.org\z'
+      subject_name_cidr:
+        - 192.0.2.0/24
 
   - {RESPONDER_TYPE}:
       {RESPONDER_OPTIONS}
