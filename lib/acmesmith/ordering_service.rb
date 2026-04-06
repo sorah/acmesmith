@@ -141,8 +141,8 @@ module Acmesmith
       end
 
       begin
-        IPAddr.new(name)  # Test if it parses
-        { type: 'ip', value: name }
+        addr = IPAddr.new(name)
+        { type: 'ip', value: addr.to_s }  # IPAddr#to_s normalizes IPv6 address to RFC 5952 form as required by RFC 8738 \S 3
       rescue IPAddr::InvalidAddressError
         { type: 'dns', value: name }
       end
