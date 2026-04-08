@@ -52,7 +52,7 @@ GEM
     faraday-retry (2.4.0)
       faraday (~> 2.0)
     jmespath (1.6.2)
-    json (2.19.1)
+    json (2.19.2)
     logger (1.7.0)
     net-http (0.9.1)
       uri (>= 0.11.1)
