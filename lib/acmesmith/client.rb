@@ -11,7 +11,13 @@ module Acmesmith
       @config ||= config
     end
 
-    def new_account(contact, tos_agreed: true)
+    def new_account(contact, tos_agreed: true, ensure_existence: false)
+      if ensure_existence && storage.account_key_exist?
+        puts "=> Account key already exists; skipping (--ensure)"
+        return account_key
+      end
+
+      puts "=> Creating an account ..."
       key = AccountKey.generate
       acme = Acme::Client.new(private_key: key.private_key, directory: config.directory, connection_options: config.connection_options, bad_nonce_retry: config.bad_nonce_retry)
       acme.new_account(contact: contact, terms_of_service_agreed: tos_agreed)

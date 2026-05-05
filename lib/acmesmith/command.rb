@@ -9,9 +9,9 @@ module Acmesmith
     class_option :passphrase_from_env,  type: :boolean, aliases: %w(-E), default: nil, desc: 'Read $ACMESMITH_ACCOUNT_KEY_PASSPHRASE and $ACMESMITH_CERTIFICATE_KEY_PASSPHRASE for passphrases'
 
     desc "new-account CONTACT", "Create account key (contact e.g. mailto:xxx@example.org)"
+    method_option :ensure, type: :boolean, default: false, desc: 'Exit normally if account key already exists (for idempotency)'
     def new_account(contact)
-      puts "=> Creating an account ..."
-      key = client.new_account(contact)
+      key = client.new_account(contact, ensure_existence: options[:ensure])
       puts "=> Public Key:"
       puts "\n#{key.private_key.public_key.to_pem}"
     end
