@@ -1,5 +1,9 @@
 ## [unreleased]
 
+### New features
+
+- `acmesmith order` and `acmesmith new-account` gain `--ensure` option for idempotency; when an account key or a certificate already exists, `acmesmith` exits with doing nothing. [#86](https://github.com/sorah/acmesmith/pull/86)
+
 ## v2.9.0 (2026-03-14)
 
 ### Enhancements
