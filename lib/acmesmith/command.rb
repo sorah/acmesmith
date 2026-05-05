@@ -35,12 +35,14 @@ module Acmesmith
     method_option :key_type, type: :string, enum: %w(rsa ec), default: 'rsa', desc: 'key type'
     method_option :rsa_key_size, type: :numeric, default: 2048, desc: 'size of RSA key'
     method_option :elliptic_curve, type: :string, default: 'prime256v1', desc: 'elliptic curve group for EC key'
+    method_option :ensure, type: :boolean, default: false, desc: 'Skip issuance if a current certificate already covers all identifiers and has not expired (for idempotency)'
     def order(name, *sans)
       cert = client.order(
         name, *sans,
         key_type: options[:key_type],
         rsa_key_size: options[:rsa_key_size],
         elliptic_curve: options[:elliptic_curve],
+        ensure_existence: options[:ensure],
       )
       if options[:show_certificate]
         puts cert.certificate.to_text
