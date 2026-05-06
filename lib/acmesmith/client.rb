@@ -3,6 +3,7 @@ require 'acmesmith/certificate'
 require 'acmesmith/authorization_service'
 require 'acmesmith/ordering_service'
 require 'acmesmith/save_certificate_service'
+require 'acmesmith/storages/base'
 require 'acme-client'
 
 module Acmesmith
@@ -11,7 +12,13 @@ module Acmesmith
       @config ||= config
     end
 
-    def new_account(contact, tos_agreed: true)
+    def new_account(contact, tos_agreed: true, ensure_existence: false)
+      if ensure_existence && storage.account_key_exist?
+        puts "=> Account key already exists; skipping (--ensure)"
+        return account_key
+      end
+
+      puts "=> Creating an account ..."
       key = AccountKey.generate
       acme = Acme::Client.new(private_key: key.private_key, directory: config.directory, connection_options: config.connection_options, bad_nonce_retry: config.bad_nonce_retry)
       acme.new_account(contact: contact, terms_of_service_agreed: tos_agreed)
@@ -21,9 +28,9 @@ module Acmesmith
       key
     end
 
-    def order(*identifiers, key_type: 'rsa', rsa_key_size: 2048, elliptic_curve: 'prime256v1', not_before: nil, not_after: nil)
+    def order(*identifiers, key_type: 'rsa', rsa_key_size: 2048, elliptic_curve: 'prime256v1', not_before: nil, not_after: nil, ensure_existence: false)
       private_key = generate_private_key(key_type: key_type, rsa_key_size: rsa_key_size, elliptic_curve: elliptic_curve)
-      order_with_private_key(*identifiers, private_key: private_key, not_before: not_before, not_after: not_after)
+      order_with_private_key(*identifiers, private_key: private_key, not_before: not_before, not_after: not_after, ensure_existence: ensure_existence)
     end
 
     def authorize(*identifiers)
@@ -218,7 +225,7 @@ module Acmesmith
       end
     end
 
-    def order_with_private_key(name, *identifiers, private_key:, not_before: nil, not_after: nil)
+    def order_with_private_key(name, *identifiers, private_key:, not_before: nil, not_after: nil, ensure_existence: false)
       order = OrderingService.new(
         acme: acme,
         common_name: name,
@@ -230,6 +237,19 @@ module Acmesmith
         not_before: not_before,
         not_after: not_after
       )
+
+      if ensure_existence
+        existing = begin
+          storage.get_certificate(name, version: 'current')
+        rescue Storages::Base::NotExist
+          nil
+        end
+        if existing && order.covers?(existing)
+          puts "=> Current certificate for #{name} covers all requested identifiers and is not expired; skipping (--ensure)"
+          return existing
+        end
+      end
+
       order.perform!
       cert = order.certificate
 

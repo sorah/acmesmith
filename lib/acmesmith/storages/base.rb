@@ -18,6 +18,14 @@ module Acmesmith
         raise NotImplementedError
       end
 
+      # @return [Boolean]
+      def account_key_exist?
+        get_account_key
+        true
+      rescue NotExist
+        false
+      end
+
       # @param cert [Acmesmith::Certificate]
       # @param passphrase [String, nil]
       # @param update_current [true, false]

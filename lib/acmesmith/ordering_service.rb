@@ -31,6 +31,16 @@ module Acmesmith
 
     attr_reader :acme, :common_name, :identifiers, :private_key, :challenge_responder_rules, :chain_preferences, :profile_rules, :not_before, :not_after
 
+    # @param certificate [Acmesmith::Certificate]
+    # @return [Boolean] true iff the certificate is unexpired and already contains every identifier this order would request
+    def covers?(certificate)
+      return false if certificate.certificate.not_after.utc <= Time.now.utc
+
+      existing = (certificate.sans + certificate.ip_sans).map { |s| acme_identifier(s) }
+      requested = identifiers.map { |id| acme_identifier(id) }
+      (requested - existing).empty?
+    end
+
     def perform!
       puts "=> Ordering a certificate for the following identifiers:"
       puts

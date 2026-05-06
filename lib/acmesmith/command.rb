@@ -9,9 +9,9 @@ module Acmesmith
     class_option :passphrase_from_env,  type: :boolean, aliases: %w(-E), default: nil, desc: 'Read $ACMESMITH_ACCOUNT_KEY_PASSPHRASE and $ACMESMITH_CERTIFICATE_KEY_PASSPHRASE for passphrases'
 
     desc "new-account CONTACT", "Create account key (contact e.g. mailto:xxx@example.org)"
+    method_option :ensure, type: :boolean, default: false, desc: 'Exit normally if account key already exists (for idempotency)'
     def new_account(contact)
-      puts "=> Creating an account ..."
-      key = client.new_account(contact)
+      key = client.new_account(contact, ensure_existence: options[:ensure])
       puts "=> Public Key:"
       puts "\n#{key.private_key.public_key.to_pem}"
     end
@@ -35,12 +35,14 @@ module Acmesmith
     method_option :key_type, type: :string, enum: %w(rsa ec), default: 'rsa', desc: 'key type'
     method_option :rsa_key_size, type: :numeric, default: 2048, desc: 'size of RSA key'
     method_option :elliptic_curve, type: :string, default: 'prime256v1', desc: 'elliptic curve group for EC key'
+    method_option :ensure, type: :boolean, default: false, desc: 'Skip issuance if a current certificate already covers all identifiers and has not expired (for idempotency)'
     def order(name, *sans)
       cert = client.order(
         name, *sans,
         key_type: options[:key_type],
         rsa_key_size: options[:rsa_key_size],
         elliptic_curve: options[:elliptic_curve],
+        ensure_existence: options[:ensure],
       )
       if options[:show_certificate]
         puts cert.certificate.to_text
